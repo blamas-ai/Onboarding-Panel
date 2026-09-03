@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Onboarding Lebane</title>
+  <style>
+    :root {
+      --blue:#125BFF;
+      --blue-soft:#EAF1FF;
+      --yellow:#FFF7D6;
+      --green:#EAF7EF;
+      --gray:#F4F5F7;
+      --red:#EF4444;
+      --red-soft:#FEF2F2;
+      --orange:#F59E0B;
+      --text:#111827;
+      --muted:#6B7280;
+      --border:#E5E7EB;
+      --bg:#F8FAFC;
+      --white:#FFFFFF;
+      --shadow:0 12px 32px rgba(17,24,39,.10);
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); font-size:14px; }
+    button,input,select,textarea { font-family:inherit; font-size:14px; }
+
+    /* ── LAYOUT ── */
+    .app { max-width:1500px; margin:0 auto; padding:24px 28px 60px; }
+
+    .topbar {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap:20px; margin-bottom:20px; flex-wrap:wrap;
+    }
+    .brand { display:flex; align-items:center; gap:16px; }
+    .logo {
+      height:52px; padding:0 16px; border:1px solid var(--border);
+      border-radius:14px; background:#fff; display:flex; align-items:center;
+      gap:10px; font-size:22px; font-weight:900; letter-spacing:-.04em;
+      box-shadow:0 4px 12px rgba(17,24,39,.06);
+    }
+    .bars { display:grid; gap:3px; }
+    .bars span { height:4px; background:var(--blue); display:block; border-radius:2px; }
+    .bars span:nth-child(1),.bars span:nth-child(2) { width:18px; }
+    .bars span:nth-child(3) { width:26px; }
+    h1 { font-size:26px; letter-spacing:-.04em; }
+    .subtitle { margin:3px 0 0; color:var(--muted); font-size:13px; }
+    .topActions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      border:1px solid var(--border); background:#fff; color:var(--text);
+      border-radius:11px; padding:9px 14px; font-weight:800; cursor:pointer;
+      transition:.12s ease; white-space:nowrap; line-height:1;
+    }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(17,24,39,.09); }
+    .btn:active { transform:translateY(0); }
+    .btn.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .btn.dark { background:#111827; border-color:#111827; color:#fff; }
+    .btn.danger { background:var(--red-soft); border-color:#FECACA; color:#991B1B; }
+    .btn.success { background:#DCFCE7; border-color:#BBF7D0; color:#166534; }
+    .btn.small { padding:6px 10px; font-size:12px; border-radius:9px; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+    .bell {
+      width:42px; height:42px; border-radius:11px;
+      position:relative; display:flex; align-items:center; justify-content:center; font-size:18px;
+    }
+    .badge {
+      position:absolute; top:-6px; right:-6px; min-width:20px; height:20px;
+      padding:0 5px; border-radius:999px; background:var(--red); color:#fff;
+      border:2px solid #fff; display:none; align-items:center; justify-content:center;
+      font-size:10px; font-weight:900;
+    }
+
+    /* ── TABS ── */
+    .tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+    .tab { border:1px solid var(--border); border-radius:999px; background:#fff; padding:9px 16px; font-weight:900; cursor:pointer; }
+    .tab.active { background:#111827; border-color:#111827; color:#fff; }
+
+    /* ── FILTERS ── */
+    .filters {
+      background:#fff; border:1px solid var(--border); border-radius:18px;
+      padding:14px 16px; display:grid;
+      grid-template-columns:1fr 1fr 1fr 1fr 1.4fr; gap:10px;
+      margin-bottom:14px; box-shadow:0 4px 14px rgba(17,24,39,.04);
+    }
+    label { display:block; font-size:11px; font-weight:900; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    input,select,textarea {
+      width:100%; border:1px solid var(--border); border-radius:10px;
+      padding:9px 11px; outline:none; background:#fff; color:var(--text);
+    }
+    textarea { resize:vertical; min-height:80px; }
+    input:focus,select:focus,textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(18,91,255,.10); }
+
+    /* ── ALERTS ── */
+    .alertStrip { display:grid; gap:8px; margin-bottom:14px; }
+    .alertCard {
+      background:#fff; border:1px solid #FECACA; border-left:4px solid var(--red);
+      border-radius:16px; padding:12px 16px; display:flex; justify-content:space-between;
+      gap:12px; align-items:flex-start;
+    }
+    .alertCard.orange { border-color:#FDE68A; border-left-color:var(--orange); }
+    .alertTitle { font-weight:900; margin-bottom:3px; font-size:14px; }
+    .smallText { font-size:12px; color:var(--muted); line-height:1.45; }
+
+    /* ── STAGE CARDS ── */
+    .stageCards { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .stageCard { border:1px solid var(--border); border-radius:18px; padding:16px; }
+    .stageCard h3 { margin:0 0 10px; font-size:14px; }
+    .num { font-size:32px; font-weight:950; letter-spacing:-.05em; }
+    .stageCard p { margin:4px 0 0; color:var(--muted); font-size:11px; }
+    .bg-blue { background:var(--blue-soft); }
+    .bg-yellow { background:var(--yellow); }
+    .bg-green { background:var(--green); }
+    .bg-gray { background:var(--gray); }
+
+    /* ── PIPELINE ── */
+    .pipeline { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .column {
+      background:#fff; border:1px solid var(--border); border-radius:18px;
+      min-height:400px; overflow:hidden; box-shadow:0 6px 18px rgba(17,24,39,.03);
+    }
+    .colHead {
+      padding:13px 15px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .colHead h2 { margin:0; font-size:16px; }
+    .colBody { padding:12px; display:grid; gap:10px; }
+
+    /* ── CLIENT CARD ── */
+    .clientCard {
+      position:relative; background:#fff; border:1px solid var(--border);
+      border-radius:16px; padding:13px; box-shadow:0 5px 14px rgba(17,24,39,.04);
+      transition:.12s ease;
+    }
+    .clientCard:hover { box-shadow:0 8px 22px rgba(17,24,39,.08); }
+    .clientCard.elevated { border-color:#FCA5A5; box-shadow:0 0 0 2px rgba(239,68,68,.10); }
+    .clientTitle { font-size:14px; font-weight:900; margin:0 0 4px; padding-right:80px; line-height:1.3; }
+    .meta { font-size:12px; color:var(--muted); line-height:1.4; word-break:break-word; }
+
+    .quick { position:absolute; top:11px; right:11px; display:grid; gap:5px; width:70px; }
+
+    /* ── TAGS / PILLS ── */
+    .tags,.actions { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
+    .pill {
+      display:inline-flex; align-items:center; border-radius:999px;
+      padding:4px 9px; border:1px solid var(--border); background:#fff;
+      font-size:11px; font-weight:800; white-space:nowrap; line-height:1;
+    }
+    .pill.green  { background:#DCFCE7; border-color:#BBF7D0; color:#166534; }
+    .pill.red    { background:#FEF2F2; border-color:#FECACA; color:#991B1B; }
+    .pill.blue   { background:var(--blue-soft); border-color:#C7D8FF; color:#125BFF; }
+    .pill.yellow { background:var(--yellow); border-color:#FDE68A; color:#92400E; }
+    .pill.gray   { background:#F3F4F6; color:#374151; border-color:#E5E7EB; }
+
+    .empty { border:1px dashed var(--border); background:#FAFAFA; border-radius:14px; padding:18px; text-align:center; color:var(--muted); font-size:13px; }
+
+    /* ── PANEL CARDS (Calendario / Histórico) ── */
+    .wideGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .viewGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .panelCard { background:#fff; border:1px solid var(--border); border-radius:18px; padding:15px; box-shadow:0 6px 18px rgba(17,24,39,.04); }
+    .panelCard h3 { margin:0 0 8px; font-size:15px; }
+    .row { display:flex; justify-content:space-between; gap:8px; font-size:12px; margin:5px 0; }
+    .row span:first-child { color:var(--muted); }
+    .divider { height:1px; background:var(--border); margin:12px 0; }
+    a.link { color:var(--blue); font-weight:900; text-decoration:none; word-break:break-all; }
+    a.link:hover { text-decoration:underline; }
+
+    /* ── MODAL ── */
+    .modalBack {
+      position:fixed; inset:0; background:rgba(17,24,39,.48);
+      display:none; align-items:center; justify-content:center;
+      padding:20px; z-index:50;
+    }
+    .modal {
+      background:#fff; border-radius:22px; border:1px solid var(--border);
+      width:min(860px,100%); max-height:92vh; overflow:auto;
+      box-shadow:var(--shadow); display:flex; flex-direction:column;
+    }
+    .modal.large { width:min(1100px,100%); }
+    .modalHead {
+      padding:14px 18px; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center;
+      position:sticky; top:0; background:#fff; z-index:2;
+    }
+    .modalHead h3 { margin:0; font-size:18px; }
+    .modalFoot {
+      padding:13px 18px; border-top:1px solid var(--border);
+      display:flex; gap:8px; justify-content:flex-end;
+      position:sticky; bottom:0; background:#fff; z-index:2;
+    }
+    .modalBody { padding:16px 18px; flex:1; }
+
+    /* ── FORM GRID ── */
+    .formGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .full { grid-column:1/-1; }
+    .scheduleBox {
+      display:none; border:1px dashed #C7D8FF; background:#F8FBFF;
+      border-radius:12px; padding:12px;
+    }
+    .scheduleBox.visible { display:block; }
+
+    /* ── TIMELINE / AUDIT ── */
+    .timeline { display:grid; gap:7px; }
+    .event { background:#FAFAFA; border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+    .event strong { display:block; font-size:13px; }
+    .event p { margin:4px 0 0; font-size:12px; color:#4B5563; line-height:1.4; }
+
+    /* ── FORM RESPONSES ── */
+    .responseGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .answer { background:#FAFAFA; border:1px solid var(--border); border-radius:12px; padding:11px; }
+    .answer b { display:block; font-size:11px; margin-bottom:4px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .answer p { margin:0; font-size:13px; color:#374151; white-space:pre-wrap; word-break:break-word; line-height:1.45; }
+
+    /* ── FUP SUMMARY ── */
+    .fupGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .fupBox { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
+    .fupBox .fupNum { font-size:28px; font-weight:950; letter-spacing:-.04em; }
+    .fupBox .fupLabel { font-size:11px; color:var(--muted); margin-top:3px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position:fixed; right:20px; bottom:20px; z-index:80;
+      background:#111827; color:#fff; padding:12px 16px; border-radius:14px;
+      display:none; max-width:420px; box-shadow:var(--shadow); line-height:1.4; font-size:13px;
+    }
+    .toast.error { background:#991B1B; }
+
+    /* ── SPINNER ── */
+    .loading { opacity:.55; pointer-events:none; }
+
+    /* ── SECTION TITLE ── */
+    .sectionTitle { font-size:13px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin:0 0 10px; }
+
+    /* ── GOOGLE CALENDAR ── */
+    #gcal-wrap { background:#fff; border:1px solid var(--border); border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(17,24,39,.04); }
+    .gcal-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); background:#fff; }
+    .gcal-nav { display:flex; gap:8px; align-items:center; }
+    .gcal-title { font-size:18px; font-weight:900; letter-spacing:-.03em; margin-left:4px; }
+    .gcal-views { display:flex; gap:6px; }
+    .gcal-month { padding:0; }
+    .gcal-week-header { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--border); }
+    .gcal-day-name { text-align:center; font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:10px 0; }
+    .gcal-grid { display:grid; grid-template-columns:repeat(7,1fr); }
+    .gcal-cell { min-height:110px; border-right:1px solid var(--border); border-bottom:1px solid var(--border); padding:6px 5px; background:#fff; vertical-align:top; }
+    .gcal-cell.other { background:var(--bg); }
+    .gcal-cell.today { background:#EAF1FF; }
+    .gcal-day-num { font-size:13px; font-weight:700; color:var(--muted); margin-bottom:4px; width:26px; text-align:center; }
+    .gcal-day-num.today-num { background:var(--blue); color:#fff; border-radius:999px; font-weight:900; }
+    .gcal-event { border-radius:6px; padding:3px 6px; margin-bottom:3px; cursor:pointer; font-size:11px; line-height:1.35; transition:.1s; }
+    .gcal-event:hover { opacity:.82; transform:translateY(-1px); }
+    .gcal-event-title { display:block; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gcal-event-om { display:block; color:var(--muted); font-size:10px; }
+    .gcal-event-link { font-size:12px; margin-right:4px; text-decoration:none; }
+    .gcal-event-complete { padding:2px 6px !important; font-size:10px !important; border-radius:6px !important; }
+
+    /* Vista semana */
+    .gcal-week-view { padding:0; }
+    .gcal-week-header-row { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--border); }
+    .gcal-week-col-head { text-align:center; padding:12px 4px 8px; border-right:1px solid var(--border); }
+    .gcal-week-col-head.today { background:#EAF1FF; }
+    .gcal-wday { display:block; font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+    .gcal-wnum { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; font-size:16px; font-weight:900; border-radius:999px; margin-top:4px; }
+    .gcal-wnum.today-num { background:var(--blue); color:#fff; }
+    .gcal-week-cols { display:grid; grid-template-columns:repeat(7,1fr); min-height:300px; }
+    .gcal-week-col { border-right:1px solid var(--border); padding:8px 5px; background:#fff; }
+    .gcal-week-col.today { background:#EAF1FF; }
+
+    @media(max-width:1050px) {
+      .filters,.stageCards,.pipeline,.wideGrid,.viewGrid,.formGrid,.responseGrid,.fupGrid { grid-template-columns:1fr; }
+      .topbar { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <div class="bars"><span></span><span></span><span></span></div>
+        Lebane
+      </div>
+      <div>
+        <h1>Onboarding Lebane</h1>
+        <p class="subtitle">Pipeline visual · Mails automáticos · Auditoría · Respuestas del Form</p>
+      </div>
+    </div>
+    <div class="topActions">
+      <button class="btn bell" onclick="openUnmatchedModal()" title="Respuestas sin match">
+        🔔 <span class="badge" id="bellBadge">0</span>
+      </button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>
+        <span id="formTriggerBadge" title="Estado del trigger automático del Form"
+          style="font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer"
+          onclick="openTriggerModal()">⏳ verificando...</span>
+      </div>
+      <button class="btn" onclick="loadData()">↺ Actualizar</button>
+      <button class="btn" onclick="runDebug()" title="Debug: ver respuesta cruda del servidor">🐛 Debug</button>
+      <button class="btn" onclick="openOmManager()" title="Gestionar OMs">👥 OMs</button>
+      <button class="btn" onclick="exportCSV()" title="Exportar datos visibles como CSV">⬇ Exportar</button>
+      <button class="btn primary" onclick="openAddModal()">+ Agregar cliente</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-pipeline" onclick="setView('pipeline')">Pipeline · Clientes</button>
+    <button class="tab" id="tab-calendar" onclick="setView('calendar')">Calendario</button>
+    <button class="tab" id="tab-history" onclick="setView('history')">Histórico</button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <div><label>Desde</label><input type="date" id="filterFrom" onchange="loadData()"></div>
+    <div><label>Hasta</label><input type="date" id="filterTo" onchange="loadData()"></div>
+    <div>
+      <label>OM</label>
+      <select id="filterOm" onchange="loadData()">
+        <option value="">Todos los OM</option>
+        <option>Agus</option>
+        <option>Gaba</option>
+        <option>Juli</option>
+        <option>Brisa</option>
+      </select>
+    </div>
+    <div>
+      <label>AM</label>
+      <select id="filterAm" onchange="loadData()">
+        <option value="">Todos los AM</option>
+        <option>pia.airaldi@lebane.app</option>
+        <option>g.murillo@lebane.app</option>
+      </select>
+    </div>
+    <div><label>Buscar</label><input type="search" id="filterSearch" placeholder="Empresa, mail, revenue..." oninput="debouncedLoad()"></div>
+  </div>
+
+  <!-- ALERTS -->
+  <div id="alertStrip" class="alertStrip"></div>
+
+  <!-- MAIN -->
+  <div id="main"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modalBack" id="modalBack" onclick="onBackdropClick(event)">
+  <div class="modal" id="modalBox">
+    <div class="modalHead">
+      <h3 id="modalTitle">—</h3>
+      <button class="btn small" onclick="closeModal()">✕ Cerrar</button>
+    </div>
+    <div class="modalBody" id="modalBody"></div>
+    <div class="modalFoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+const OM_LIST = ['Agus','Gaba','Juli','Brisa'];
+const AM_LIST = ['pia.airaldi@lebane.app','g.murillo@lebane.app'];
+
+let state = {
+  view: 'pipeline',
+  data: emptyData(),
+  timer: null
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  checkTriggerStatus();
+});
+
+function emptyData() {
+  return {
+    counts: { bienvenida:0, discovery:0, calendario:0, historico:0, unmatched:0 },
+    grouped: { Bienvenida:[], Discovery:[], Calendario:[] },
+    calendar: [], historic: [], unmatched: [], elevated: []
+  };
+}
+
+/* =========================================================
+   SERVER
+========================================================= */
+function callServer(action, payload) {
+  return new Promise((resolve, reject) => {
+    if (typeof google === 'undefined' || !google.script) {
+      reject(new Error('Abrí el panel desde el menú "Onboarding Lebane > Abrir panel".'));
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function(res) {
+        console.log('[callServer] ' + action + ' OK:', JSON.stringify(res).slice(0, 300));
+        resolve(res);
+      })
+      .withFailureHandler(function(err) {
+        console.error('[callServer] ' + action + ' ERROR:', err);
+        reject(err);
+      })
+      .apiRouter(action, payload || {});
+  });
+}
+
+/* =========================================================
+   CARGA Y RENDER
+========================================================= */
+function getFilters() {
+  return {
+    from: val('filterFrom'), to: val('filterTo'),
+    om: val('filterOm'), am: val('filterAm'),
+    search: val('filterSearch')
+  };
+}
+
+// ── Exportar CSV ──
+function exportCSV() {
+  const view = state.view;
+  let rows = [];
+  let filename = 'lebane-onboarding.csv';
+
+  if (view === 'pipeline') {
+    const headers = ['Etapa','Empresa','Mails','Revenue','OM','AM','Form','Mail Bienvenida','Días en etapa','Estado'];
+    rows.push(headers);
+    ['Bienvenida','Discovery','Calendario'].forEach(stage => {
+      (state.data.grouped[stage] || []).forEach(c => {
+        rows.push([
+          stage,
+          emp(c),
+          c.mails || '',
+          c.revenue || '',
+          c.om || '',
+          c.am || '',
+          c.respondioForm || 'NO',
+          c.mailBienvenida || '',
+          c.daysInStage || 0,
+          c.estado || ''
+        ]);
+      });
+    });
+    filename = 'pipeline.csv';
+  } else if (view === 'calendar') {
+    const headers = ['Empresa','Mails','OM','AM','Fecha Reunión','Link Reunión','Estado'];
+    rows.push(headers);
+    (state.data.calendar || []).forEach(c => {
+      rows.push([
+        emp(c),
+        c.mails || '',
+        c.om || '',
+        c.am || '',
+        fmtDate(c.fecha || ''),
+        c.linkReunion || '',
+        c.estado || ''
+      ]);
+    });
+    filename = 'calendario.csv';
+  } else if (view === 'history') {
+    const headers = ['Empresa','Mails','Revenue','OM','AM','Fecha Reunión','Fecha Completado','FUP Total'];
+    rows.push(headers);
+    (state.data.historic || []).forEach(c => {
+      rows.push([
+        emp(c),
+        c.mails || '',
+        c.revenue || '',
+        c.om || '',
+        c.am || '',
+        fmtDate(c.fechaReunion || ''),
+        fmtDate(c.fechaCompleto || ''),
+        c.fupTotal || 0
+      ]);
+    });
+    filename = 'historico.csv';
+  }
+
+  if (rows.length < 2) { toast('No hay datos para exportar.', true); return; }
+
+  const csv = rows.map(r =>
+    r.map(cell => '"' + String(cell || '').replace(/"/g, '""') + '"').join(',')
+  ).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado: ' + filename);
+}
+
+// ── Form Trigger UI ──
+async function checkTriggerStatus() {
+  try {
+    const res = await callServer('getFormTriggerStatus', {});
+    const badge = id('formTriggerBadge');
+    if (!badge) return;
+    if (res && res.installed) {
+      badge.textContent = '🟢 Auto-sync activo';
+      badge.style.background = '#DCFCE7';
+      badge.style.borderColor = '#BBF7D0';
+      badge.style.color = '#166534';
+    } else {
+      badge.textContent = '🔴 Sin auto-sync';
+      badge.style.background = '#FEF2F2';
+      badge.style.borderColor = '#FECACA';
+      badge.style.color = '#991B1B';
+    }
+  } catch(e) {
+    const badge = id('formTriggerBadge');
+    if (badge) { badge.textContent = '❓ sin info'; }
+  }
+}
+
+function openTriggerModal() {
+  openModal('⚙️ Actualización automática del Form', `
+    <div style="display:grid;gap:14px">
+      <div class="panelCard" style="border-left:4px solid var(--blue)">
+        <p class="sectionTitle">¿Cómo funciona?</p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-top:6px">
+          El sistema lee las respuestas del Google Form desde el Sheet vinculado:<br>
+          <code style="background:var(--bg);padding:2px 6px;border-radius:6px;font-size:12px">1drL-Nkujq5itFF0Uq4o9vNvVPdArPovntKluBQ7t3rY</code>
+        </p>
+        <div class="divider"></div>
+        <div class="timeline" style="margin-top:4px">
+          <div class="event"><strong>📋 Manual</strong><p>Botón "Sincronizar Form" — procesa todas las respuestas pendientes ahora mismo.</p></div>
+          <div class="event"><strong>⏱ Automático cada hora</strong><p>Un trigger recorre todas las respuestas nuevas y matchea con clientes.</p></div>
+          <div class="event"><strong>⚡ Tiempo real (recomendado)</strong><p>Se instala un trigger sobre el Sheet del Form que se dispara al instante cuando alguien responde.</p></div>
+        </div>
+      </div>
+      <div id="triggerStatusBox" style="padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--bg);font-size:13px">
+        Verificando estado...
+      </div>
+    </div>`,
+    `<button class="btn" onclick="closeModal()">Cerrar</button>
+     <button class="btn" onclick="syncNow();closeModal()">↻ Sincronizar ahora</button>
+     <button class="btn primary" onclick="installTrigger()">⚡ Activar tiempo real</button>`,
+    false
+  );
+  // Verificar estado al abrir
+  callServer('getFormTriggerStatus', {}).then(res => {
+    const box = id('triggerStatusBox');
+    if (!box) return;
+    if (res && res.installed) {
+      box.innerHTML = '<span style="color:#166534;font-weight:700">🟢 Trigger activo</span> — Las respuestas se procesan automáticamente en tiempo real.';
+      box.style.background = '#DCFCE7';
+      box.style.borderColor = '#BBF7D0';
+    } else {
+      box.innerHTML = '<span style="color:#991B1B;font-weight:700">🔴 Trigger no instalado</span> — Hacé clic en "Activar tiempo real" para instalarlo.';
+      box.style.background = '#FEF2F2';
+      box.style.borderColor = '#FECACA';
+    }
+  }).catch(() => {});
+}
+
+async function installTrigger() {
+  setLoading(true);
+  try {
+    const res = await callServer('installFormTrigger', {});
+    toast((res && res.message) || 'Trigger instalado.');
+    closeModal();
+    await checkTriggerStatus();
+  } catch(e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function loadData() {
+  setLoading(true);
+  try {
+    const res = await callServer('getAppData', getFilters());
+    // Manejar null (error silencioso del servidor)
+    if (!res) {
+      toast('El servidor devolvió una respuesta vacía. Revisá el Log de Apps Script.', true);
+      render();
+      return;
+    }
+    // Manejar error explícito del servidor
+    if (res.error || !res.ok) {
+      toast('Error del servidor: ' + (res.message || 'error desconocido'), true);
+      console.error('[loadData] server error:', res);
+      render();
+      return;
+    }
+    state.data = normalizeData(res);
+    render();
+  } catch (e) {
+    toast('Error al cargar: ' + errMsg(e), true);
+    console.error('[loadData] catch:', e);
+    render();
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function runDebug() {
+  setLoading(true);
+  try {
+    const res = await callServer('getAppData', {});
+    if (!res) {
+      alert('ERROR: El servidor devolvió NULL.\n\nCausas posibles:\n1. El nombre del sheet no es exactamente "Clientes y etapas"\n2. Hay un error interno en getAppData\n\nRevisá el Log de Apps Script (Extensiones > Apps Script > Ejecutar > Ver registros)');
+      return;
+    }
+    if (res.error || !res.ok) {
+      alert('ERROR del servidor:\n' + (res.message || JSON.stringify(res)));
+      return;
+    }
+    const msg = '✅ Servidor OK\n\n' +
+      'counts: ' + JSON.stringify(res.counts) + '\n\n' +
+      'Bienvenida: ' + (res.grouped.Bienvenida || []).length + ' clientes\n' +
+      'Discovery: '  + (res.grouped.Discovery  || []).length + ' clientes\n' +
+      'Calendario: ' + (res.grouped.Calendario || []).length + ' clientes\n\n' +
+      'Primer cliente (si existe):\n' + JSON.stringify((res.grouped.Bienvenida || [])[0] || 'ninguno');
+    alert(msg);
+  } catch (e) {
+    alert('EXCEPCIÓN en debug:\n' + errMsg(e) + '\n\nRevisá el Log de Apps Script.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function debouncedLoad() {
+  clearTimeout(state.timer);
+  state.timer = setTimeout(loadData, 380);
+}
+
+function normalizeData(raw) {
+  const d = raw || emptyData();
+  d.counts = Object.assign({ bienvenida:0, discovery:0, calendario:0, historico:0, unmatched:0 }, d.counts);
+  d.grouped = Object.assign({ Bienvenida:[], Discovery:[], Calendario:[] }, d.grouped);
+  d.calendar  = d.calendar  || [];
+  d.historic  = d.historic  || d.history || [];
+  d.unmatched = d.unmatched || [];
+  d.elevated  = d.elevated  || [];
+  return d;
+}
+
+function setView(v) {
+  state.view = v;
+  ['pipeline','calendar','history'].forEach(t => {
+    const el = id('tab-' + t);
+    if (el) el.classList.toggle('active', t === v);
+  });
+  render();
+}
+
+function render() {
+  updateBell();
+  renderAlerts();
+  if (state.view === 'pipeline')  renderPipeline();
+  if (state.view === 'calendar')  renderCalendar();
+  if (state.view === 'history')   renderHistory();
+}
+
+/* =========================================================
+   BELL & ALERTS
+========================================================= */
+function updateBell() {
+  const n = state.data.counts.unmatched || 0;
+  const badge = id('bellBadge');
+  if (!badge) return;
+  badge.style.display = n > 0 ? 'flex' : 'none';
+  badge.textContent = n;
+}
+
+function renderAlerts() {
+  const el = id('alertStrip');
+  let html = '';
+
+  if ((state.data.elevated || []).length) {
+    const pills = state.data.elevated.map(c =>
+      `<button class="pill red" onclick="openProfile('${esc(cid(c))}')">${esc(emp(c))} · ${c.daysInStage}d</button>`
+    ).join('');
+    html += `<div class="alertCard">
+      <div><div class="alertTitle">⚠️ Clientes sin movimiento hace más de 7 días</div>
+      <div class="smallText">Considerar elevar a comercial.</div>
+      <div class="actions">${pills}</div></div>
+    </div>`;
+  }
+
+  if (state.data.counts.unmatched) {
+    html += `<div class="alertCard orange">
+      <div><div class="alertTitle">🔔 Respuestas del Form sin match (${state.data.counts.unmatched})</div>
+      <div class="smallText">Hay respuestas que no coincidieron con ningún cliente cargado.</div></div>
+      <button class="btn small" onclick="openUnmatchedModal()">Revisar</button>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+/* =========================================================
+   PIPELINE
+========================================================= */
+function renderPipeline() {
+  const d = state.data;
+  id('main').innerHTML = `
+    <div class="stageCards">
+      ${stageCard('Bienvenida', d.counts.bienvenida, 'Etapa inicial', 'bg-blue')}
+      ${stageCard('Discovery',  d.counts.discovery,  'Respondieron el Form', 'bg-yellow')}
+      ${stageCard('Calendario', d.counts.calendario, 'Con sesión agendada', 'bg-green')}
+      ${stageCard('Histórico',  d.counts.historico,  'Completados', 'bg-gray')}
+    </div>
+    <div class="pipeline">
+      ${['Bienvenida','Discovery','Calendario'].map(s => renderColumn(s, d.grouped[s] || [])).join('')}
+    </div>
+  `;
+}
+
+function stageCard(title, count, text, cls) {
+  return `<div class="stageCard ${cls}"><h3>${title}</h3><div class="num">${count}</div><p>${text}</p></div>`;
+}
+
+const PAGE_SIZE = 8;
+const colPages = { Bienvenida: 0, Discovery: 0, Calendario: 0 };
+
+function renderColumn(stage, list) {
+  const page    = colPages[stage] || 0;
+  const total   = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages - 1);
+  colPages[stage]  = safePage;
+  const slice   = list.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+
+  const pager = total > PAGE_SIZE ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 0;border-top:1px solid var(--border);margin-top:4px">
+      <button class="btn small" onclick="colPageChange('${esc(stage)}',-1)" ${safePage===0?'disabled':''}>&#8249;</button>
+      <span style="font-size:12px;color:var(--muted)">${safePage+1} / ${totalPages}</span>
+      <button class="btn small" onclick="colPageChange('${esc(stage)}',1)" ${safePage>=totalPages-1?'disabled':''}>&#8250;</button>
+    </div>` : '';
+
+  return `
+    <div class="column">
+      <div class="colHead"><h2>${stage}</h2><span class="pill gray">${total}</span></div>
+      <div class="colBody">
+        ${slice.length ? slice.map(renderClientCard).join('') : '<div class="empty">Sin clientes en esta etapa.</div>'}
+      </div>
+      ${pager}
+    </div>`;
+}
+
+function colPageChange(stage, delta) {
+  const list  = (state.data.grouped[stage] || []);
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  colPages[stage] = Math.max(0, Math.min((colPages[stage]||0) + delta, totalPages - 1));
+  renderPipeline();
+}
+
+function renderClientCard(c) {
+  const cId    = cid(c);
+  const etapa  = getEtapa(c);
+  const form   = (c.respondioForm || c['Respondió Form'] || 'NO');
+  const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
+  const omVal  = (c.om || c['OM'] || '');
+  const amVal  = (c.am || c['AM'] || '');
+  const days   = c.daysInStage || 0;
+
+  return `
+    <div class="clientCard${c.elevated ? ' elevated' : ''}">
+      <div class="quick">
+        <button class="btn small" onclick="sendReminder('${esc(cId)}','${esc(etapa)}')">FUP</button>
+        <button class="btn small" onclick="openProfile('${esc(cId)}')">Editar</button>
+      </div>
+      <h3 class="clientTitle">${esc(emp(c))}</h3>
+      <div class="meta">${esc(c.mails || c['Mails'] || '')}</div>
+      <div class="meta">Revenue: ${esc(c.revenue || c['Revenue'] || '-')}</div>
+      <div class="tags">
+        ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
+        ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
+        ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
+        ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
+        <span class="pill ${days >= 7 ? 'red' : 'gray'}">${days}d</span>
+      </div>
+      <div class="actions">
+        <button class="btn small" onclick="openProfile('${esc(cId)}')">Ver perfil</button>
+        ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Form</button>` : ''}
+        ${stageButtons(c)}
+      </div>
+    </div>`;
+}
+
+function stageButtons(c) {
+  const cId   = cid(c);
+  const etapa = getEtapa(c);
+  const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
+
+  if (etapa === 'Bienvenida') {
+    var btns = '';
+    if (bienvenida !== '✅') {
+      btns += `<button class="btn small primary" onclick="sendWelcome('${esc(cId)}')">Enviar bienvenida</button>`;
+    }
+    btns += `<button class="btn small" style="border-color:#F2B705;color:#92400E;background:#FFF7D6" onclick="manualToDiscovery('${esc(cId)}')">→ Discovery</button>`;
+    return btns;
+  }
+  if (etapa === 'Discovery') {
+    return `
+      <button class="btn small primary" onclick="sendDiscovery('${esc(cId)}')">Mail Discovery</button>
+      <button class="btn small dark"    onclick="sendCalendar('${esc(cId)}')">Mail Calendario</button>`;
+  }
+  if (etapa === 'Calendario') {
+    return `
+      <button class="btn small primary" onclick="openConfirmMeeting('${esc(cId)}')">Confirmar agenda</button>
+      <button class="btn small success" onclick="completeClient('${esc(cId)}')">Completar</button>`;
+  }
+  return '';
+}
+
+/* =========================================================
+   CALENDARIO
+========================================================= */
+// ── Estado del calendario ──
+const CAL = { year: new Date().getFullYear(), month: new Date().getMonth(), view: 'month' };
+
+function renderCalendar() {
+  id('main').innerHTML = `
+    <div id="gcal-wrap">
+      <div class="gcal-header">
+        <div class="gcal-nav">
+          <button class="btn small" onclick="calMove(-1)">&#8249;</button>
+          <button class="btn small" onclick="calToday()">Hoy</button>
+          <button class="btn small" onclick="calMove(1)">&#8250;</button>
+          <span id="calTitle" class="gcal-title"></span>
+        </div>
+        <div class="gcal-views">
+          <button id="vMonth" class="btn small ${CAL.view==='month'?'primary':''}" onclick="calSetView('month')">Mes</button>
+          <button id="vWeek"  class="btn small ${CAL.view==='week' ?'primary':''}" onclick="calSetView('week')">Semana</button>
+        </div>
+      </div>
+      <div id="gcal-body"></div>
+    </div>`;
+  renderCalBody();
+}
+
+function calMove(delta) {
+  if (CAL.view === 'month') {
+    CAL.month += delta;
+    if (CAL.month > 11) { CAL.month = 0;  CAL.year++; }
+    if (CAL.month < 0)  { CAL.month = 11; CAL.year--; }
+  } else {
+    CAL.weekStart = new Date(CAL.weekStart);
+    CAL.weekStart.setDate(CAL.weekStart.getDate() + delta * 7);
+  }
+  renderCalBody();
+}
+
+function calToday() {
+  const t = new Date();
+  CAL.year = t.getFullYear(); CAL.month = t.getMonth();
+  CAL.weekStart = getWeekStart(t);
+  renderCalBody();
+}
+
+function calSetView(v) {
+  CAL.view = v;
+  if (v === 'week' && !CAL.weekStart) CAL.weekStart = getWeekStart(new Date());
+  renderCalendar();
+}
+
+function getWeekStart(d) {
+  const dt = new Date(d);
+  const day = dt.getDay(); // 0=dom
+  dt.setDate(dt.getDate() - day + (day === 0 ? -6 : 1)); // lunes
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function renderCalBody() {
+  const list = state.data.calendar || [];
+
+  // Index eventos por fecha string YYYY-MM-DD
+  const byDate = {};
+  list.forEach(c => {
+    const raw = c.fecha || c['Fecha'] || '';
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(c);
+  });
+
+  const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DAYS_ES   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+  if (CAL.view === 'month') {
+    id('calTitle').textContent = MONTHS_ES[CAL.month] + ' ' + CAL.year;
+    renderMonthView(byDate, DAYS_ES);
+  } else {
+    if (!CAL.weekStart) CAL.weekStart = getWeekStart(new Date());
+    const ws = new Date(CAL.weekStart);
+    const we = new Date(ws); we.setDate(we.getDate() + 6);
+    id('calTitle').textContent = ws.getDate() + ' ' + MONTHS_ES[ws.getMonth()] + ' – ' + we.getDate() + ' ' + MONTHS_ES[we.getMonth()] + ' ' + we.getFullYear();
+    renderWeekView(byDate, DAYS_ES);
+  }
+}
+
+function renderMonthView(byDate, DAYS_ES) {
+  const firstDay = new Date(CAL.year, CAL.month, 1);
+  const lastDay  = new Date(CAL.year, CAL.month + 1, 0);
+  // Ajuste: lunes = 0
+  let startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let html = '<div class="gcal-month">';
+  // Cabecera días
+  html += '<div class="gcal-week-header">';
+  DAYS_ES.forEach(d => { html += `<div class="gcal-day-name">${d}</div>`; });
+  html += '</div><div class="gcal-grid">';
+
+  // Celdas vacías antes del día 1
+  for (let i = 0; i < startOffset; i++) html += '<div class="gcal-cell other"></div>';
+
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const dt  = new Date(CAL.year, CAL.month, day);
+    const key = CAL.year + '-' + String(CAL.month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const isToday = dt.getTime() === today.getTime();
+    const events  = byDate[key] || [];
+
+    html += `<div class="gcal-cell${isToday?' today':''}">`;
+    html += `<div class="gcal-day-num${isToday?' today-num':''}">${day}</div>`;
+    events.forEach(c => {
+      const estado = c.estado || 'Pendiente';
+      const color  = estado === 'Completado' ? '#DCFCE7' : '#EAF1FF';
+      const border = estado === 'Completado' ? '#34A853' : '#125BFF';
+      html += `<div class="gcal-event" style="background:${color};border-left:3px solid ${border}"
+        onclick="openProfile('${esc(cid(c))}')">
+        <span class="gcal-event-title">${esc(emp(c))}</span>
+        ${c.om||c['OM'] ? `<span class="gcal-event-om">${esc(c.om||c['OM'])}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Celdas vacías al final para completar la grilla
+  const totalCells = startOffset + lastDay.getDate();
+  const remainder  = totalCells % 7;
+  if (remainder > 0) {
+    for (let i = 0; i < 7 - remainder; i++) html += '<div class="gcal-cell other"></div>';
+  }
+
+  html += '</div></div>';
+  id('gcal-body').innerHTML = html;
+}
+
+function renderWeekView(byDate, DAYS_ES) {
+  const ws = new Date(CAL.weekStart);
+  ws.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let html = '<div class="gcal-week-view">';
+  html += '<div class="gcal-week-header-row">';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws); d.setDate(d.getDate() + i);
+    const isToday = d.getTime() === today.getTime();
+    html += `<div class="gcal-week-col-head${isToday?' today':''}">
+      <span class="gcal-wday">${DAYS_ES[i]}</span>
+      <span class="gcal-wnum${isToday?' today-num':''}">${d.getDate()}</span>
+    </div>`;
+  }
+  html += '</div><div class="gcal-week-cols">';
+
+  for (let i = 0; i < 7; i++) {
+    const d   = new Date(ws); d.setDate(d.getDate() + i);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const isToday = d.getTime() === today.getTime();
+    const events  = byDate[key] || [];
+
+    html += `<div class="gcal-week-col${isToday?' today':''}">`;
+    events.forEach(c => {
+      const estado = c.estado || 'Pendiente';
+      const color  = estado === 'Completado' ? '#DCFCE7' : '#EAF1FF';
+      const border = estado === 'Completado' ? '#34A853' : '#125BFF';
+      html += `<div class="gcal-event" style="background:${color};border-left:3px solid ${border};margin-bottom:5px"
+        onclick="openProfile('${esc(cid(c))}')">
+        <span class="gcal-event-title">${esc(emp(c))}</span>
+        ${c.om||c['OM'] ? `<span class="gcal-event-om">${esc(c.om||c['OM'])}</span>` : ''}
+        ${(c.linkReunion||c['Link Reunión']) ? `<a class="gcal-event-link" href="${esc(c.linkReunion||c['Link Reunión'])}" target="_blank" onclick="event.stopPropagation()">🔗</a>` : ''}
+        <button class="gcal-event-complete btn small success" onclick="event.stopPropagation();completeClient('${esc(cid(c))}')">✓</button>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  id('gcal-body').innerHTML = html;
+}
+
+/* =========================================================
+   HISTÓRICO
+========================================================= */
+function renderHistory() {
+  const list = state.data.historic || [];
+
+  const tableRows = list.length ? list.map(c => `
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 12px;font-weight:700">${esc(emp(c))}</td>
+      <td style="padding:10px 12px;color:var(--muted);font-size:12px">${esc(c.mails||'')}</td>
+      <td style="padding:10px 12px">${esc(c.om||'-')}</td>
+      <td style="padding:10px 12px">${esc(c.am||'-')}</td>
+      <td style="padding:10px 12px;font-size:12px">${fmtDate(c.fechaReunion||'')}</td>
+      <td style="padding:10px 12px;font-size:12px">${fmtDate(c.fechaCompleto||'')}</td>
+      <td style="padding:10px 12px"><span class="pill green">Completado</span></td>
+    </tr>`).join('')
+    : '<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">Sin clientes completados todavía.</td></tr>';
+
+  id('main').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+      <div class="stageCard bg-gray" style="min-width:160px;padding:14px 20px">
+        <h3 style="margin:0 0 6px;font-size:13px">Completados</h3>
+        <div class="num" style="font-size:36px">${list.length}</div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(17,24,39,.04)">
+      <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px">
+        <thead>
+          <tr style="background:#F8FAFC;border-bottom:2px solid var(--border)">
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Empresa</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Mails</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">OM</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">AM</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Fecha reunión</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Completado</th>
+            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Estado</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* =========================================================
+   ACCIONES RÁPIDAS
+========================================================= */
+async function syncNow()           { await runAction('syncFormResponses',  {},          'Form sincronizado.'); }
+async function sendWelcome(cId)    { await runAction('sendWelcomeEmail',   { id: cId }, 'Bienvenida enviada.'); }
+async function sendDiscovery(cId) {
+  // Buscar el cliente en state para ver si tiene fecha y link
+  const all = [
+    ...(state.data.grouped.Bienvenida  || []),
+    ...(state.data.grouped.Discovery   || []),
+    ...(state.data.grouped.Calendario  || [])
+  ];
+  const client = all.find(c => cid(c) === cId);
+  const fecha  = client ? (client.fechaReunion  || client['Fecha Reunión']  || '') : '';
+  const link   = client ? (client.linkReunion   || client['Link Reunión']   || '') : '';
+
+  if (!fecha || !link) {
+    // Abrir pop-up para completar datos y enviar
+    openModal('Datos para mail de Discovery', `
+      <p style="color:var(--muted);margin-bottom:14px;font-size:13px;">
+        Completá la fecha y el link de la sesión para poder enviar el mail de Discovery.
+      </p>
+      <input type="hidden" id="discId" value="${esc(cId)}">
+      <div class="formGrid">
+        <div class="full">
+          <label>Fecha y hora de la sesión *</label>
+          <input id="discFecha" type="datetime-local" value="${esc(toDateTimeLocal(fecha))}">
+        </div>
+        <div class="full">
+          <label>Link de la reunión *</label>
+          <input id="discLink" placeholder="https://meet.google.com/..." value="${esc(link)}">
+        </div>
+      </div>`,
+      `<button class="btn" onclick="closeModal()">Cancelar</button>
+       <button class="btn primary" onclick="saveAndSendDiscovery()">Guardar y enviar mail</button>`
+    );
+    return;
+  }
+  await runAction('sendDiscoveryEmail', { id: cId }, 'Mail Discovery enviado.');
+}
+
+async function saveAndSendDiscovery() {
+  const cId   = val('discId');
+  const fecha = val('discFecha');
+  const link  = val('discLink');
+  if (!fecha) { toast('Completá la fecha de la sesión.', true); return; }
+  if (!link)  { toast('Completá el link de la reunión.', true); return; }
+  // Guardar datos y luego enviar
+  setLoading(true);
+  try {
+    await callServer('updateClient', {
+      id: cId,
+      'Fecha Reunión': fecha,
+      'Link Reunión':  link
+    });
+    const res = await callServer('sendDiscoveryEmail', { id: cId });
+    toast((res && res.message) || 'Mail Discovery enviado.');
+    closeModal();
+    await loadData();
+  } catch(e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+async function sendCalendar(cId)   { await runAction('sendCalendarEmail',  { id: cId }, 'Mail Calendario enviado.'); }
+async function sendReminder(cId, stage) { await runAction('sendStageReminder', { id: cId, stage }, 'FUP enviado.'); }
+
+async function manualToDiscovery(cId) {
+  if (!confirm('¿Mover este cliente a Discovery manualmente?')) return;
+  await runAction('moveToDiscovery', { id: cId }, 'Cliente movido a Discovery.');
+}
+
+async function completeClient(cId) {
+  if (!confirm('¿Marcar como completado y mover a Histórico?')) return;
+  await runAction('completeClient', { id: cId }, 'Cliente movido a Histórico.');
+}
+
+async function runAction(action, payload, ok) {
+  setLoading(true);
+  try {
+    const res = await callServer(action, payload || {});
+    toast((res && res.message) || ok);
+    await loadData();
+  } catch (e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* =========================================================
+   MODAL AGREGAR CLIENTE
+========================================================= */
+function openAddModal() {
+  openModal('Agregar cliente', `
+    <!-- Selector de modo -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="modeBtn-send"     class="btn primary" onclick="setAddMode('send')">📧 Con envío de mail</button>
+      <button id="modeBtn-register" class="btn"         onclick="setAddMode('register')">📋 Registrar sin mail</button>
+    </div>
+    <div id="addModeDesc" style="font-size:12px;color:var(--muted);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:10px">
+      Enviará el mail de bienvenida al guardar (o en la fecha programada).
+    </div>
+
+    <div class="formGrid">
+      <div class="full"><label>Empresa *</label><input id="addEmpresa" placeholder="Nombre de la empresa"></div>
+      <div class="full"><label>Mails * (separados por coma)</label><input id="addMails" placeholder="contacto@empresa.com"></div>
+      <div><label>Revenue</label><input id="addRevenue" placeholder="ej: 15000"></div>
+      <div>
+        <label>OM</label>
+        <select id="addOm">
+          <option value="">Round Robin automático</option>
+          ${OM_LIST.map(o => '<option>' + o + '</option>').join('')}
+        </select>
+      </div>
+      <div>
+        <label>AM</label>
+        <select id="addAm">
+          <option value="">Round Robin automático</option>
+          ${AM_LIST.map(a => '<option>' + a + '</option>').join('')}
+        </select>
+      </div>
+
+      <!-- MODO ENVÍO: opciones de mail -->
+      <div id="sendModeFields">
+        <label>Enviar bienvenida</label>
+        <select id="addSend" onchange="toggleScheduleBox()">
+          <option value="true">Ahora</option>
+          <option value="false">Programar envío</option>
+          <option value="none">No enviar todavía</option>
+        </select>
+      </div>
+      <div class="full scheduleBox" id="scheduleBox">
+        <label>Fecha y hora de envío programado</label>
+        <input id="addWelcomeAt" type="datetime-local">
+        <div class="smallText" style="margin-top:6px;">Se enviará automáticamente en esa fecha/hora.</div>
+      </div>
+
+      <!-- MODO REGISTRO: campos extra de etapa e historial -->
+      <div id="registerModeFields" style="display:none;grid-column:1/-1">
+        <div class="formGrid" style="margin-top:0">
+          <div>
+            <label>Etapa actual</label>
+            <select id="addEtapa">
+              <option value="Bienvenida">Bienvenida</option>
+              <option value="Discovery">Discovery</option>
+              <option value="Calendario">Calendario</option>
+            </select>
+          </div>
+          <div>
+            <label>Estado</label>
+            <input id="addEstado" placeholder="ej: En proceso, Completado...">
+          </div>
+          <div>
+            <label>Fecha de reunión (si tiene)</label>
+            <input id="addFechaReunion" type="datetime-local">
+          </div>
+          <div>
+            <label>Link de reunión</label>
+            <input id="addLinkReunion" placeholder="https://meet...">
+          </div>
+          <div class="full" style="display:flex;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-transform:none">
+              <input type="checkbox" id="addMailBienvenida"> Mail bienvenida ya enviado
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-transform:none">
+              <input type="checkbox" id="addRespondioForm"> Respondió Form
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-transform:none">
+              <input type="checkbox" id="addMailDiscovery"> Mail discovery ya enviado
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-transform:none">
+              <input type="checkbox" id="addMailCalendario"> Mail calendario ya enviado
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="full"><label>Observaciones</label><textarea id="addObs" placeholder="Notas internas..."></textarea></div>
+    </div>`,
+    `<button class="btn" onclick="closeModal()">Cancelar</button>
+     <button class="btn primary" id="addSubmitBtn" onclick="saveNewClient()">Guardar cliente</button>`
+  );
+  setAddMode('send');
+}
+
+let _addMode = 'send';
+function setAddMode(mode) {
+  _addMode = mode;
+  id('modeBtn-send').className     = 'btn ' + (mode === 'send'     ? 'primary' : '');
+  id('modeBtn-register').className = 'btn ' + (mode === 'register' ? 'primary' : '');
+  id('sendModeFields').style.display     = mode === 'send' ? '' : 'none';
+  id('scheduleBox').style.display        = (mode === 'send' && val('addSend') === 'false') ? 'block' : 'none';
+  id('registerModeFields').style.display = mode === 'register' ? 'block' : 'none';
+  id('addModeDesc').textContent = mode === 'send'
+    ? 'Enviará el mail de bienvenida al guardar (o en la fecha programada).'
+    : 'Registra el cliente en la etapa indicada sin enviar ningún mail. Útil para cargar históricos.';
+  id('addSubmitBtn').textContent = mode === 'send' ? 'Guardar cliente' : 'Registrar sin mail';
+}
+
+function toggleScheduleBox() {
+  const box = id('scheduleBox');
+  if (box) box.classList.toggle('visible', val('addSend') === 'false');
+}
+
+async function saveNewClient() {
+  const empresa = val('addEmpresa');
+  const mails   = val('addMails');
+  if (!empresa) { toast('Completá el nombre de la empresa.', true); return; }
+  if (!mails)   { toast('Completá al menos un mail.', true); return; }
+
+  setLoading(true);
+  try {
+    let res;
+    if (_addMode === 'register') {
+      // Registro sin mail
+      res = await callServer('registerClient', {
+        empresa, mails,
+        revenue:       val('addRevenue'),
+        om:            val('addOm'),
+        am:            val('addAm'),
+        etapa:         val('addEtapa') || 'Bienvenida',
+        estado:        val('addEstado'),
+        fechaReunion:  val('addFechaReunion'),
+        linkReunion:   val('addLinkReunion'),
+        mailBienvenida:  document.getElementById('addMailBienvenida')?.checked || false,
+        respondioForm:   document.getElementById('addRespondioForm')?.checked  || false,
+        mailDiscovery:   document.getElementById('addMailDiscovery')?.checked  || false,
+        mailCalendario:  document.getElementById('addMailCalendario')?.checked || false,
+        observaciones: val('addObs')
+      });
+    } else {
+      // Modo normal con mail
+      const sendVal = val('addSend');
+      if (sendVal === 'false' && !val('addWelcomeAt')) {
+        toast('Completá la fecha y hora de envío programado.', true);
+        setLoading(false); return;
+      }
+      res = await callServer('addClient', {
+        empresa, mails,
+        revenue:            val('addRevenue'),
+        om:                 val('addOm'),
+        am:                 val('addAm'),
+        sendWelcomeNow:     sendVal === 'true',
+        welcomeScheduledAt: sendVal === 'false' ? val('addWelcomeAt') : '',
+        fechaProgramadaBienvenida: sendVal === 'false' ? val('addWelcomeAt') : '',
+        observaciones:      val('addObs')
+      });
+    }
+    toast((res && res.message) || 'Cliente guardado.');
+    closeModal();
+    await loadData();
+  } catch (e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* =========================================================
+   PERFIL DE CLIENTE
+========================================================= */
+async function openProfile(cId) {
+  setLoading(true);
+  try {
+    const res = await callServer('getClientProfile', { id: cId });
+    const c   = res.client || {};
+    const audit = res.audit || [];
+    const fup   = res.fupSummary || {};
+    const form  = res.formResponse || [];
+
+    openModal('Perfil · ' + esc(emp(c)), profileHtml(c, audit, fup, form), profileFooter(c), true);
+  } catch (e) {
+    toast('Error al cargar perfil: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function profileHtml(c, audit, fup, form) {
+  const cId   = cid(c);
+  const etapa = getEtapa(c);
+  return `
+    <input type="hidden" id="editId" value="${esc(cId)}">
+
+    <p class="sectionTitle">Datos del cliente</p>
+    <div class="formGrid">
+      <div><label>Empresa</label><input id="editEmpresa" value="${esc(emp(c))}"></div>
+      <div><label>Revenue</label><input id="editRevenue" value="${esc(c.revenue||c['Revenue']||'')}"></div>
+      <div class="full"><label>Mails</label><input id="editMails" value="${esc(c.mails||c['Mails']||'')}"></div>
+      <div>
+        <label>Etapa</label>
+        <select id="editEtapa">
+          ${['Bienvenida','Discovery','Calendario'].map(s => `<option ${etapa===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>Estado</label><input id="editEstado" value="${esc(c.estado||c['Estado']||'')}"></div>
+      <div>
+        <label>OM</label>
+        <select id="editOm">
+          <option value=""></option>
+          ${OM_LIST.map(o => `<option ${(c.om||c['OM'])===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label>AM</label>
+        <select id="editAm">
+          <option value=""></option>
+          ${AM_LIST.map(a => `<option ${(c.am||c['AM'])===a?'selected':''}>${a}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>Fecha reunión</label><input id="editFechaReunion" type="datetime-local" value="${toDateTimeLocal(c.fechaReunion||c['Fecha Reunión']||'')}"></div>
+      <div><label>Link reunión</label><input id="editLinkReunion" value="${esc(c.linkReunion||c['Link Reunión']||'')}"></div>
+      <div class="full"><label>Observaciones</label><textarea id="editObs">${esc(c.observaciones||c['Observaciones']||'')}</textarea></div>
+      <div class="full"><label>Comentarios internos</label><textarea id="editComentarios">${esc(c.comentarios||c['Comentarios Internos']||'')}</textarea></div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="sectionTitle">Seguimiento de FUPs</p>
+    <div class="fupGrid">
+      <div class="fupBox bg-blue"><div class="fupNum">${fup.bienvenida||0}</div><div class="fupLabel">Bienvenida</div></div>
+      <div class="fupBox bg-yellow"><div class="fupNum">${fup.discovery||0}</div><div class="fupLabel">Discovery</div></div>
+      <div class="fupBox bg-green"><div class="fupNum">${fup.calendario||0}</div><div class="fupLabel">Calendario</div></div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="sectionTitle">Auditoría</p>
+    <div class="timeline">
+      ${audit.length
+        ? audit.map(e => `<div class="event">
+            <strong>${esc(e.accion||'')} <span style="font-weight:400;color:var(--muted)">${fmtDate(e.fecha)}</span></strong>
+            <p>${esc(e.etapa||'')}${e.detalle ? ' · ' + esc(e.detalle) : ''}</p>
+            ${e.usuario ? `<p style="color:var(--muted)">${esc(e.usuario)}</p>` : ''}
+          </div>`).join('')
+        : '<div class="empty">Sin eventos registrados.</div>'}
+    </div>
+
+    ${form.length ? `
+      <div class="divider"></div>
+      <p class="sectionTitle">Respuesta del formulario</p>
+      <div class="responseGrid">${renderPairs(form)}</div>` : ''}
+  `;
+}
+
+function profileFooter(c) {
+  const cId = cid(c);
+  const etapa = getEtapa(c);
+  return `
+    <button class="btn" onclick="closeModal()">Cerrar</button>
+    <button class="btn dark" onclick="saveEdit()">Guardar cambios</button>
+    ${(c.idRespuestaForm||c['ID Respuesta Form']) ? `<button class="btn" onclick="openResponseModal({clientId:'${esc(cId)}'})">Ver respuesta</button>` : ''}
+    <button class="btn danger" onclick="sendReminder('${esc(cId)}','${esc(etapa)}');closeModal()">Enviar FUP</button>
+  `;
+}
+
+// ── OM Manager ──
+async function openOmManager() {
+  setLoading(true);
+  try {
+    const res = await callServer('getOmList', {});
+    renderOmManager(res.list || []);
+  } catch(e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderOmManager(list) {
+  const rows = list.length ? list.map(om => `
+    <div class="panelCard" style="padding:12px 14px" id="om-row-${esc(om.name)}">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div style="font-weight:900;font-size:14px">${esc(om.name)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all">${esc(om.calendar||'Sin Calendly')}</div>
+        </div>
+        <span class="pill ${om.active?'green':'red'}" style="flex-shrink:0">${om.active?'✓ Activo':'✗ Inactivo'}</span>
+        <button class="btn small" onclick="openEditOm('${esc(om.name)}','${esc(om.calendar||'')}',${om.active})">✏️ Editar</button>
+        <button class="btn small ${om.active?'danger':'success'}" onclick="doToggleOm('${esc(om.name)}',${!om.active})">${om.active?'Desactivar':'Activar'}</button>
+        <button class="btn small danger" onclick="doDeleteOm('${esc(om.name)}')">🗑</button>
+      </div>
+    </div>`).join('')
+    : '<div class="empty">No hay OMs cargados.</div>';
+
+  openModal('👥 Gestión de OMs', `
+    <p class="smallText" style="margin-bottom:12px">Solo los OMs <strong>activos</strong> reciben asignaciones por Round Robin.</p>
+    <div style="display:grid;gap:8px;margin-bottom:16px">${rows}</div>
+    <div class="divider"></div>
+    <p class="sectionTitle" style="margin:14px 0 10px">Agregar nuevo OM</p>
+    <div class="formGrid">
+      <div><label>Nombre del OM *</label><input id="newOmName" placeholder="ej: Pedro"></div>
+      <div><label>Link de Calendly</label><input id="newOmCal" placeholder="https://calendly.com/..."></div>
+    </div>`,
+    `<button class="btn" onclick="closeModal()">Cerrar</button>
+     <button class="btn primary" onclick="doAddOm()">+ Agregar OM</button>`
+  );
+}
+
+function openEditOm(name, calendar, active) {
+  openModal('✏️ Editar OM — ' + esc(name), `
+    <input type="hidden" id="editOmName" value="${esc(name)}">
+    <div class="formGrid">
+      <div class="full"><label>Nombre</label><input value="${esc(name)}" disabled style="opacity:.5"></div>
+      <div class="full"><label>Link de Calendly</label><input id="editOmCal" value="${esc(calendar)}"></div>
+      <div class="full">
+        <label>Estado</label>
+        <select id="editOmActive">
+          <option value="true"  ${active?'selected':''}>Activo</option>
+          <option value="false" ${!active?'selected':''}>Inactivo</option>
+        </select>
+      </div>
+    </div>`,
+    `<button class="btn" onclick="openOmManager()">← Volver</button>
+     <button class="btn primary" onclick="doEditOm()">Guardar cambios</button>`
+  );
+}
+
+async function doAddOm() {
+  const name = val('newOmName');
+  const cal  = val('newOmCal');
+  if (!name) { toast('Completá el nombre del OM.', true); return; }
+  setLoading(true);
+  try {
+    const res = await callServer('addOm', { name, calendar: cal });
+    toast((res&&res.message)||'OM agregado.');
+    await openOmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doEditOm() {
+  const name   = val('editOmName');
+  const cal    = val('editOmCal');
+  const active = val('editOmActive') === 'true';
+  setLoading(true);
+  try {
+    const res = await callServer('editOm', { name, calendar: cal, active });
+    toast((res&&res.message)||'OM actualizado.');
+    await openOmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doToggleOm(name, active) {
+  setLoading(true);
+  try {
+    await callServer('toggleOmActive', { om: name, active });
+    await openOmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doDeleteOm(name) {
+  if (!confirm('¿Eliminar el OM "' + name + '"? No se puede deshacer.')) return;
+  setLoading(true);
+  try {
+    const res = await callServer('deleteOm', { om: name });
+    toast((res&&res.message)||'OM eliminado.');
+    await openOmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function saveEdit() {
+  const data = {
+    id: val('editId'),
+    Empresa: val('editEmpresa'), Mails: val('editMails'),
+    Revenue: val('editRevenue'), Etapa: val('editEtapa'),
+    Estado: val('editEstado'), OM: val('editOm'), AM: val('editAm'),
+    'Fecha Reunión': val('editFechaReunion'),
+    'Link Reunión': val('editLinkReunion'),
+    Observaciones: val('editObs'),
+    'Comentarios Internos': val('editComentarios')
+  };
+  await runAction('updateClient', data, 'Cliente actualizado.');
+  closeModal();
+}
+
+/* =========================================================
+   CONFIRMAR REUNIÓN
+========================================================= */
+function openConfirmMeeting(cId) {
+  openModal('Confirmar reunión agendada', `
+    <input type="hidden" id="confirmId" value="${esc(cId)}">
+    <div class="formGrid">
+      <div><label>Fecha y hora *</label><input id="confirmFecha" type="datetime-local"></div>
+      <div><label>Link reunión</label><input id="confirmLink" placeholder="Meet / Zoom / Calendario..."></div>
+      <div class="full"><label>Observaciones</label><textarea id="confirmObs"></textarea></div>
+    </div>`,
+    `<button class="btn" onclick="closeModal()">Cancelar</button>
+     <button class="btn primary" onclick="saveMeeting()">Confirmar reunión</button>`
+  );
+}
+
+async function saveMeeting() {
+  const fechaVal = val('confirmFecha');
+  if (!fechaVal) { toast('Completá la fecha de la reunión.', true); return; }
+  // Enviar como string ISO directo del input datetime-local
+  await runAction('confirmMeeting', {
+    id:           val('confirmId'),
+    fecha:        fechaVal,           // ej: "2026-07-09T11:00"
+    link:         val('confirmLink'),
+    observaciones:val('confirmObs')
+  }, 'Reunión confirmada.');
+  closeModal();
+}
+
+/* =========================================================
+   RESPUESTAS DEL FORM
+========================================================= */
+async function openResponseModal(query) {
+  setLoading(true);
+  try {
+    const res = await callServer('getFormResponseDetails', query || {});
+    const pairs = (res && res.response) || [];
+    openModal('Respuesta del formulario',
+      `<div class="responseGrid">${renderPairs(pairs)}</div>`,
+      `<button class="btn primary" onclick="closeModal()">Cerrar</button>`,
+      true
+    );
+  } catch (e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderPairs(pairs) {
+  if (!pairs || !pairs.length) return '<div class="empty">Sin datos de formulario.</div>';
+  return pairs.map(p => {
+    const label = p.label || p.pregunta || '';
+    const value = String(p.value ?? p.respuesta ?? '');
+    if (!label && !value) return '';
+    return `<div class="answer"><b>${esc(label)}</b><p>${esc(value)}</p></div>`;
+  }).join('');
+}
+
+/* =========================================================
+   MODAL UNMATCHED
+========================================================= */
+function openUnmatchedModal() {
+  const list = state.data.unmatched || [];
+  const clients = [
+    ...(state.data.grouped.Bienvenida || []),
+    ...(state.data.grouped.Discovery  || []),
+    ...(state.data.grouped.Calendario || [])
+  ];
+  const options = clients.map(c =>
+    '<option value="' + esc(cid(c)) + '">' + esc(emp(c)) + ' · ' + esc(c.mails||c['Mails']||'') + '</option>'
+  ).join('');
+
+  let html = '';
+  if (!list.length) {
+    html = '<div class="empty">No hay respuestas pendientes de revisión.</div>';
+  } else {
+    html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;">';
+    html += '<input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" style="width:16px;height:16px;cursor:pointer">';
+    html += '<label for="selectAll" style="margin:0;font-size:13px;font-weight:700;cursor:pointer;text-transform:none;color:var(--text);">Seleccionar todas (' + list.length + ')</label>';
+    html += '<button class="btn small danger" style="margin-left:auto" onclick="ignoreMassive()">🗑 Ignorar seleccionadas</button>';
+    html += '</div>';
+
+    list.forEach(function(r) {
+      var rId = r.responseId || r['Response ID'] || r.fila || '';
+      html += '<div class="panelCard" style="margin-bottom:10px" id="unmatch-card-' + esc(rId) + '">';
+      html += '<div style="display:flex;align-items:flex-start;gap:10px">';
+      html += '<input type="checkbox" class="unmatch-cb" data-id="' + esc(rId) + '" style="width:16px;height:16px;margin-top:4px;cursor:pointer;flex-shrink:0">';
+      html += '<div style="flex:1">';
+      html += '<h3 style="margin:0 0 6px">' + esc(emp(r) || 'Sin empresa detectada') + '</h3>';
+      html += '<div class="tags"><span class="pill yellow">Sin match</span>';
+      if (r.mails||r['Mails']) html += '<span class="pill blue">' + esc(r.mails||r['Mails']) + '</span>';
+      html += '<span class="pill gray">Fila ' + esc(r.fila||r['Fila']||'-') + '</span></div>';
+      html += '<div class="smallText" style="margin-top:6px;">' + fmtDate(r.fechaRegistro||r['Fecha Registro']) + '</div>';
+      html += '<div class="divider"></div>';
+      html += '<label>Matchear con cliente existente</label>';
+      html += '<select id="match-' + esc(rId) + '" style="margin-bottom:8px"><option value="">Seleccionar cliente...</option>' + options + '</select>';
+      html += '<div class="actions">';
+      html += '<button class="btn small" onclick="openResponseModal({responseId:\'' + esc(rId) + '\'})">Ver respuesta</button>';
+      html += '<button class="btn small primary" onclick="matchResponse(\'' + esc(rId) + '\')">Matchear</button>';
+      html += '<button class="btn small danger" onclick="ignoreOne(\'' + esc(rId) + '\')">Ignorar esta</button>';
+      html += '</div></div></div></div>';
+    });
+  }
+
+  openModal('🔔 Respuestas sin match', html,
+    '<button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>' +
+    '<button class="btn primary" onclick="closeModal()">Cerrar</button>',
+    true
+  );
+}
+
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.unmatch-cb').forEach(function(cb) { cb.checked = checked; });
+}
+
+async function ignoreMassive() {
+  var checked = Array.from(document.querySelectorAll('.unmatch-cb:checked'));
+  if (!checked.length) { toast('Seleccioná al menos una respuesta.', true); return; }
+  if (!confirm('¿Ignorar ' + checked.length + ' respuesta(s)? No se puede deshacer.')) return;
+  setLoading(true);
+  var done = 0;
+  for (var i = 0; i < checked.length; i++) {
+    try {
+      await callServer('ignoreUnmatchedResponse', { responseId: checked[i].dataset.id });
+      var card = document.getElementById('unmatch-card-' + checked[i].dataset.id);
+      if (card) card.remove();
+      done++;
+    } catch(e) { console.error(e); }
+  }
+  setLoading(false);
+  toast(done + ' respuesta(s) ignoradas.');
+  await loadData();
+  closeModal();
+}
+
+async function ignoreOne(rId) {
+  if (!confirm('¿Ignorar esta respuesta?')) return;
+  await runAction('ignoreUnmatchedResponse', { responseId: rId }, 'Respuesta ignorada.');
+  closeModal();
+}
+
+async function matchResponse(rId) {
+  const clientId = val('match-' + rId);
+  if (!clientId) { toast('Seleccioná un cliente.', true); return; }
+  await runAction('matchUnmatchedResponse', { responseId: rId, clientId }, 'Respuesta matcheada.');
+  closeModal();
+}
+
+async function ignoreResponse(rId) {
+  if (!confirm('¿Ignorar esta respuesta? No se podrá deshacer.')) return;
+  await runAction('ignoreUnmatchedResponse', { responseId: rId }, 'Respuesta ignorada.');
+  closeModal();
+}
+
+/* =========================================================
+   MODAL HELPERS
+========================================================= */
+function openModal(title, body, footer, large) {
+  id('modalTitle').innerHTML = title;
+  id('modalBody').innerHTML  = body;
+  id('modalFoot').innerHTML  = footer || `<button class="btn primary" onclick="closeModal()">Cerrar</button>`;
+  id('modalBox').classList.toggle('large', !!large);
+  id('modalBack').style.display = 'flex';
+}
+
+function closeModal() { id('modalBack').style.display = 'none'; }
+
+function onBackdropClick(e) {
+  if (e.target === id('modalBack')) closeModal();
+}
+
+/* =========================================================
+   UTILS
+========================================================= */
+function id(i)  { return document.getElementById(i); }
+function val(i) { const el = id(i); return el ? String(el.value || '').trim() : ''; }
+
+function setLoading(v) {
+  const el = id('app');
+  if (el) el.classList.toggle('loading', !!v);
+}
+
+function toast(msg, isError) {
+  const t = id('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
+
+function errMsg(e) {
+  if (!e) return 'Error desconocido.';
+  return e.message || String(e);
+}
+
+function esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function emp(c) { return c.empresa || c['Empresa'] || ''; }
+
+function cid(c) {
+  return String(c.id || c['ID'] || c.clientId || c.rowId || emp(c) || '');
+}
+
+function getEtapa(c) { return c.etapa || c['Etapa'] || 'Bienvenida'; }
+
+function fmtDate(v) {
+  if (!v) return '-';
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  return d.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function toDateTimeLocal(v) {
+  if (!v) return '';
+  const d = new Date(v);
+  if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+</script>
+</body>
+</html>
