@@ -395,13 +395,12 @@ function callServer(action, payload) {
       reject(new Error('Abrí el panel desde el menú "Onboarding Lebane > Abrir panel".'));
       return;
     }
+
     google.script.run
       .withSuccessHandler(function(res) {
-        console.log('[callServer] ' + action + ' OK:', JSON.stringify(res).slice(0, 300));
         resolve(res);
       })
       .withFailureHandler(function(err) {
-        console.error('[callServer] ' + action + ' ERROR:', err);
         reject(err);
       })
       .apiRouter(action, payload || {});
