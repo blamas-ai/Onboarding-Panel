@@ -1140,15 +1140,24 @@ async function completeClient(cId) {
   if (!confirm('¿Marcar como completado y mover a Histórico?')) return;
   await runAction('completeClient', { id: cId }, 'Cliente movido a Histórico.');
 }
-
-async function runAction(action, payload, ok) {
+async function runAction(action, payload, ok, refresh = true) {
   setLoading(true);
+
   try {
     const res = await callServer(action, payload || {});
+
     toast((res && res.message) || ok);
-    await loadData();
+
+    if (refresh) {
+      await loadData();
+    }
+
+    return res;
+
   } catch (e) {
     toast('Error: ' + errMsg(e), true);
+    throw e;
+
   } finally {
     setLoading(false);
   }
