@@ -26,26 +26,55 @@
     button,input,select,textarea { font-family:inherit; font-size:14px; }
 
     /* ── LAYOUT ── */
-    .app { max-width:1500px; margin:0 auto; padding:24px 28px 60px; }
+    .app { max-width:1500px; margin:0 auto; padding:18px 28px 60px; }
 
     .topbar {
-      display:flex; justify-content:space-between; align-items:flex-start;
-      gap:20px; margin-bottom:20px; flex-wrap:wrap;
+      display:flex; justify-content:space-between; align-items:center;
+      gap:18px; margin-bottom:14px;
+      padding:12px 14px; background:#fff; border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 6px 20px rgba(17,24,39,.05);
+      position:relative; z-index:20;
     }
-    .brand { display:flex; align-items:center; gap:16px; }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
     .logo {
-      height:52px; padding:0 16px; border:1px solid var(--border);
-      border-radius:14px; background:#fff; display:flex; align-items:center;
-      gap:10px; font-size:22px; font-weight:900; letter-spacing:-.04em;
-      box-shadow:0 4px 12px rgba(17,24,39,.06);
+      height:42px; padding:0 13px; border:1px solid var(--border);
+      border-radius:12px; background:#fff; display:flex; align-items:center;
+      gap:9px; font-size:19px; font-weight:900; letter-spacing:-.04em;
+      box-shadow:none; flex-shrink:0;
     }
+    .brandCopy { min-width:0; }
     .bars { display:grid; gap:3px; }
     .bars span { height:4px; background:var(--blue); display:block; border-radius:2px; }
-    .bars span:nth-child(1),.bars span:nth-child(2) { width:18px; }
-    .bars span:nth-child(3) { width:26px; }
-    h1 { font-size:26px; letter-spacing:-.04em; }
-    .subtitle { margin:3px 0 0; color:var(--muted); font-size:13px; }
-    .topActions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .bars span:nth-child(1),.bars span:nth-child(2) { width:16px; }
+    .bars span:nth-child(3) { width:23px; }
+    h1 { font-size:22px; line-height:1.1; letter-spacing:-.035em; }
+    .subtitle { margin:4px 0 0; color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .topActions { display:flex; gap:7px; align-items:center; flex-shrink:0; }
+
+    /* ── CONFIGURACIÓN ── */
+    .settingsWrap { position:relative; }
+    .settingsBtn { display:flex; align-items:center; gap:7px; }
+    .settingsMenu {
+      display:none; position:absolute; right:0; top:calc(100% + 9px);
+      width:270px; padding:8px; background:#fff; border:1px solid var(--border);
+      border-radius:15px; box-shadow:0 18px 45px rgba(17,24,39,.16); z-index:100;
+    }
+    .settingsMenu.open { display:block; }
+    .settingsMenuTitle {
+      padding:7px 9px 8px; font-size:10px; font-weight:900; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.07em;
+    }
+    .settingsItem {
+      width:100%; border:0; background:transparent; color:var(--text); cursor:pointer;
+      border-radius:10px; padding:10px 11px; display:flex; align-items:center; gap:10px;
+      text-align:left; font-weight:800; line-height:1.2;
+    }
+    .settingsItem:hover { background:var(--bg); }
+    .settingsIcon { width:22px; text-align:center; font-size:15px; flex-shrink:0; }
+    .settingsText { flex:1; }
+    .settingsHint { display:block; margin-top:2px; font-size:10px; font-weight:500; color:var(--muted); }
+    .settingsDivider { height:1px; background:var(--border); margin:6px 3px; }
+    #formTriggerBadge { border:0 !important; background:transparent !important; color:var(--text) !important; padding:10px 11px !important; border-radius:10px !important; font-size:14px !important; }
 
     /* ── BUTTONS ── */
     .btn {
@@ -269,7 +298,18 @@
 
     @media(max-width:1050px) {
       .filters,.stageCards,.pipeline,.wideGrid,.viewGrid,.formGrid,.responseGrid,.fupGrid { grid-template-columns:1fr; }
-      .topbar { flex-direction:column; }
+      .topbar { align-items:flex-start; flex-wrap:wrap; }
+      .topActions { width:100%; justify-content:flex-end; }
+    }
+    @media(max-width:720px) {
+      .app { padding:12px 12px 40px; }
+      .topbar { padding:11px; gap:11px; }
+      .logo { height:38px; font-size:17px; padding:0 11px; }
+      h1 { font-size:19px; }
+      .subtitle { max-width:55vw; }
+      .topActions { justify-content:flex-start; flex-wrap:wrap; }
+      .topActions > .btn:not(.bell) { padding:8px 10px; }
+      .settingsMenu { position:fixed; left:12px; right:12px; top:auto; width:auto; }
     }
   </style>
 </head>
@@ -283,26 +323,48 @@
         <div class="bars"><span></span><span></span><span></span></div>
         Lebane
       </div>
-      <div>
+      <div class="brandCopy">
         <h1>Onboarding Lebane</h1>
-        <p class="subtitle">Pipeline visual · Mails automáticos · Auditoría · Respuestas del Form</p>
+        <p class="subtitle">Seguimiento de clientes · Formularios · Agenda · Implementación</p>
       </div>
     </div>
+
     <div class="topActions">
       <button class="btn bell" onclick="openUnmatchedModal()" title="Respuestas sin match">
         🔔 <span class="badge" id="bellBadge">0</span>
       </button>
-      <div style="display:flex;align-items:center;gap:6px">
-        <button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>
-        <span id="formTriggerBadge" title="Estado del trigger automático del Form"
-          style="font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer"
-          onclick="openTriggerModal()">⏳ verificando...</span>
-      </div>
-      <button class="btn" onclick="loadData()">↺ Actualizar</button>
-      <button class="btn" onclick="runDebug()" title="Debug: ver respuesta cruda del servidor">🐛 Debug</button>
-      <button class="btn" onclick="openOmManager()" title="Gestionar OMs">👥 OMs</button>
       <button class="btn" onclick="exportCSV()" title="Exportar datos visibles como CSV">⬇ Exportar</button>
       <button class="btn primary" onclick="openAddModal()">+ Agregar cliente</button>
+
+      <div class="settingsWrap">
+        <button class="btn settingsBtn" id="settingsBtn" onclick="toggleSettingsMenu(event)" aria-expanded="false">
+          ⚙ Configuración
+        </button>
+        <div class="settingsMenu" id="settingsMenu">
+          <div class="settingsMenuTitle">Herramientas del panel</div>
+          <button class="settingsItem" onclick="closeSettingsMenu();syncNow()">
+            <span class="settingsIcon">↻</span>
+            <span class="settingsText">Sincronizar formulario<span class="settingsHint">Busca y vincula respuestas pendientes</span></span>
+          </button>
+          <button class="settingsItem" id="formTriggerBadge" onclick="closeSettingsMenu();openTriggerModal()" title="Estado del trigger automático del Form">
+            <span class="settingsIcon">⚡</span>
+            <span class="settingsText">Auto-sync<span class="settingsHint">Configurar actualización automática</span></span>
+          </button>
+          <button class="settingsItem" onclick="closeSettingsMenu();loadData(true)">
+            <span class="settingsIcon">↺</span>
+            <span class="settingsText">Actualizar datos<span class="settingsHint">Recarga la vista actual</span></span>
+          </button>
+          <div class="settingsDivider"></div>
+          <button class="settingsItem" onclick="closeSettingsMenu();openOmManager()">
+            <span class="settingsIcon">👥</span>
+            <span class="settingsText">Gestionar OMs<span class="settingsHint">Altas, bajas y calendarios</span></span>
+          </button>
+          <button class="settingsItem" onclick="closeSettingsMenu();runDebug()">
+            <span class="settingsIcon">🐛</span>
+            <span class="settingsText">Diagnóstico<span class="settingsHint">Revisar respuesta del servidor</span></span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -315,11 +377,11 @@
 
   <!-- FILTERS -->
   <div class="filters">
-    <div><label>Desde</label><input type="date" id="filterFrom" onchange="loadData()"></div>
-    <div><label>Hasta</label><input type="date" id="filterTo" onchange="loadData()"></div>
+    <div><label>Desde</label><input type="date" id="filterFrom" onchange="applyLocalFilters()"></div>
+    <div><label>Hasta</label><input type="date" id="filterTo" onchange="applyLocalFilters()"></div>
     <div>
       <label>OM</label>
-      <select id="filterOm" onchange="loadData()">
+      <select id="filterOm" onchange="applyLocalFilters()">
         <option value="">Todos los OM</option>
         <option>Agus</option>
         <option>Gaba</option>
@@ -329,13 +391,13 @@
     </div>
     <div>
       <label>AM</label>
-      <select id="filterAm" onchange="loadData()">
+      <select id="filterAm" onchange="applyLocalFilters()">
         <option value="">Todos los AM</option>
         <option>pia.airaldi@lebane.app</option>
         <option>g.murillo@lebane.app</option>
       </select>
     </div>
-    <div><label>Buscar</label><input type="search" id="filterSearch" placeholder="Empresa, mail, revenue..." oninput="debouncedLoad()"></div>
+    <div><label>Buscar</label><input type="search" id="filterSearch" placeholder="Empresa, mail, revenue..." oninput="applyLocalFilters()"></div>
   </div>
 
   <!-- ALERTS -->
@@ -370,12 +432,37 @@ const AM_LIST = ['pia.airaldi@lebane.app','g.murillo@lebane.app'];
 let state = {
   view: 'pipeline',
   data: emptyData(),
-  timer: null
+  loaded: { pipeline:false, calendar:false, history:false }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-  loadData();
-  checkTriggerStatus();
+  loadPipelineData();
+});
+
+function toggleSettingsMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = id('settingsMenu');
+  const btn = id('settingsBtn');
+  if (!menu) return;
+  const open = !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function closeSettingsMenu() {
+  const menu = id('settingsMenu');
+  const btn = id('settingsBtn');
+  if (menu) menu.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+document.addEventListener('click', function(event) {
+  const wrap = document.querySelector('.settingsWrap');
+  if (wrap && !wrap.contains(event.target)) closeSettingsMenu();
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') closeSettingsMenu();
 });
 
 function emptyData() {
@@ -390,47 +477,30 @@ function emptyData() {
    SERVER
 ========================================================= */
 async function callServer(action, payload) {
+  const response = await fetch('/api/onboarding', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: action,
+      payload: payload || {}
+    })
+  });
+
+  let data;
   try {
-    const response = await fetch('/api/onboarding', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: action,
-        payload: payload || {}
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || `Error HTTP ${response.status}`
-      );
-    }
-
-    if (data && data.error) {
-      throw new Error(
-        data.message || 'Error del servidor.'
-      );
-    }
-
-    console.log(
-      '[callServer] ' + action + ' OK:',
-      data
-    );
-
-    return data;
-
-  } catch (err) {
-    console.error(
-      '[callServer] ' + action + ' ERROR:',
-      err
-    );
-
-    throw err;
+    data = await response.json();
+  } catch (e) {
+    throw new Error('El servidor no devolvió una respuesta válida.');
   }
+
+  if (!response.ok) {
+    throw new Error((data && data.message) || ('Error HTTP ' + response.status));
+  }
+  if (data && data.error) {
+    throw new Error(data.message || 'Error del servidor.');
+  }
+
+  return data;
 }
 
 /* =========================================================
@@ -454,7 +524,7 @@ function exportCSV() {
     const headers = ['Etapa','Empresa','Mails','Revenue','OM','AM','Form','Mail Bienvenida','Días en etapa','Estado'];
     rows.push(headers);
     ['Bienvenida','Discovery','Calendario'].forEach(stage => {
-      (state.data.grouped[stage] || []).forEach(c => {
+      filteredStage(stage).forEach(c => {
         rows.push([
           stage,
           emp(c),
@@ -473,7 +543,7 @@ function exportCSV() {
   } else if (view === 'calendar') {
     const headers = ['Empresa','Mails','OM','AM','Fecha Reunión','Link Reunión','Estado'];
     rows.push(headers);
-    (state.data.calendar || []).forEach(c => {
+    filteredCalendar().forEach(c => {
       rows.push([
         emp(c),
         c.mails || '',
@@ -488,7 +558,7 @@ function exportCSV() {
   } else if (view === 'history') {
     const headers = ['Empresa','Mails','Revenue','OM','AM','Fecha Reunión','Fecha Completado','FUP Total'];
     rows.push(headers);
-    (state.data.historic || []).forEach(c => {
+    filteredHistory().forEach(c => {
       rows.push([
         emp(c),
         c.mails || '',
@@ -526,19 +596,19 @@ async function checkTriggerStatus() {
     const badge = id('formTriggerBadge');
     if (!badge) return;
     if (res && res.installed) {
-      badge.textContent = '🟢 Auto-sync activo';
+      badge.innerHTML = '<span class="settingsIcon">🟢</span><span class="settingsText">Auto-sync activo<span class="settingsHint">Las respuestas se procesan automáticamente</span></span>';
       badge.style.background = '#DCFCE7';
       badge.style.borderColor = '#BBF7D0';
       badge.style.color = '#166534';
     } else {
-      badge.textContent = '🔴 Sin auto-sync';
+      badge.innerHTML = '<span class="settingsIcon">🔴</span><span class="settingsText">Sin auto-sync<span class="settingsHint">Activá la actualización automática</span></span>';
       badge.style.background = '#FEF2F2';
       badge.style.borderColor = '#FECACA';
       badge.style.color = '#991B1B';
     }
   } catch(e) {
     const badge = id('formTriggerBadge');
-    if (badge) { badge.textContent = '❓ sin info'; }
+    if (badge) { badge.innerHTML = '<span class="settingsIcon">❓</span><span class="settingsText">Auto-sync<span class="settingsHint">No se pudo verificar el estado</span></span>'; }
   }
 }
 
@@ -597,63 +667,168 @@ async function installTrigger() {
   }
 }
 
-async function loadData() {
+async function loadPipelineData() {
   setLoading(true);
   try {
-    const res = await callServer('getAppData', getFilters());
-    // Manejar null (error silencioso del servidor)
-    if (!res) {
-      toast('El servidor devolvió una respuesta vacía. Revisá el Log de Apps Script.', true);
-      render();
-      return;
+    const res = await callServer('getPipelineData', {});
+    if (!res || res.error || !res.ok) {
+      throw new Error((res && res.message) || 'No se pudo cargar el Pipeline.');
     }
-    // Manejar error explícito del servidor
-    if (res.error || !res.ok) {
-      toast('Error del servidor: ' + (res.message || 'error desconocido'), true);
-      console.error('[loadData] server error:', res);
-      render();
-      return;
-    }
-    state.data = normalizeData(res);
+
+    state.data.counts = Object.assign(
+      { bienvenida:0, discovery:0, calendario:0, historico:0, unmatched:0 },
+      res.counts || {}
+    );
+    state.data.grouped = Object.assign(
+      { Bienvenida:[], Discovery:[], Calendario:[] },
+      res.grouped || {}
+    );
+    state.data.unmatched = res.unmatched || [];
+    state.data.elevated = res.elevated || [];
+    state.loaded.pipeline = true;
     render();
   } catch (e) {
-    toast('Error al cargar: ' + errMsg(e), true);
-    console.error('[loadData] catch:', e);
-    render();
+    toast('Error al cargar Pipeline: ' + errMsg(e), true);
+    console.error(e);
   } finally {
     setLoading(false);
+  }
+}
+
+async function loadCalendarData() {
+  setLoading(true);
+  try {
+    const res = await callServer('getCalendarData', {});
+    if (!res || res.error || !res.ok) {
+      throw new Error((res && res.message) || 'No se pudo cargar el Calendario.');
+    }
+    state.data.calendar = res.calendar || [];
+    state.loaded.calendar = true;
+    render();
+  } catch (e) {
+    toast('Error al cargar Calendario: ' + errMsg(e), true);
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function loadHistoryData() {
+  setLoading(true);
+  try {
+    const res = await callServer('getHistoryData', {});
+    if (!res || res.error || !res.ok) {
+      throw new Error((res && res.message) || 'No se pudo cargar el Histórico.');
+    }
+    state.data.historic = res.historic || [];
+    state.data.counts.historico = state.data.historic.length;
+    state.loaded.history = true;
+    render();
+  } catch (e) {
+    toast('Error al cargar Histórico: ' + errMsg(e), true);
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function loadData(force) {
+  if (state.view === 'pipeline') {
+    if (force || !state.loaded.pipeline) return loadPipelineData();
+    return render();
+  }
+  if (state.view === 'calendar') {
+    if (force || !state.loaded.calendar) return loadCalendarData();
+    return render();
+  }
+  if (state.view === 'history') {
+    if (force || !state.loaded.history) return loadHistoryData();
+    return render();
   }
 }
 
 async function runDebug() {
   setLoading(true);
   try {
-    const res = await callServer('getAppData', {});
-    if (!res) {
-      alert('ERROR: El servidor devolvió NULL.\n\nCausas posibles:\n1. El nombre del sheet no es exactamente "Clientes y etapas"\n2. Hay un error interno en getAppData\n\nRevisá el Log de Apps Script (Extensiones > Apps Script > Ejecutar > Ver registros)');
-      return;
-    }
-    if (res.error || !res.ok) {
-      alert('ERROR del servidor:\n' + (res.message || JSON.stringify(res)));
+    const res = await callServer('getPipelineData', {});
+    if (!res || res.error || !res.ok) {
+      alert('ERROR del servidor:\n' + ((res && res.message) || 'Respuesta vacía'));
       return;
     }
     const msg = '✅ Servidor OK\n\n' +
       'counts: ' + JSON.stringify(res.counts) + '\n\n' +
       'Bienvenida: ' + (res.grouped.Bienvenida || []).length + ' clientes\n' +
       'Discovery: '  + (res.grouped.Discovery  || []).length + ' clientes\n' +
-      'Calendario: ' + (res.grouped.Calendario || []).length + ' clientes\n\n' +
-      'Primer cliente (si existe):\n' + JSON.stringify((res.grouped.Bienvenida || [])[0] || 'ninguno');
+      'Calendario: ' + (res.grouped.Calendario || []).length + ' clientes';
     alert(msg);
   } catch (e) {
-    alert('EXCEPCIÓN en debug:\n' + errMsg(e) + '\n\nRevisá el Log de Apps Script.');
+    alert('EXCEPCIÓN en debug:\n' + errMsg(e));
   } finally {
     setLoading(false);
   }
 }
 
-function debouncedLoad() {
-  clearTimeout(state.timer);
-  state.timer = setTimeout(loadData, 380);
+function applyLocalFilters() {
+  render();
+}
+
+function matchesCommonFilters(c) {
+  const f = getFilters();
+
+  if (f.om && String(c.om || c['OM'] || '') !== f.om) return false;
+  if (f.am && String(c.am || c['AM'] || '') !== f.am) return false;
+
+  if (f.search) {
+    const q = normalizeSearch(f.search);
+    const blob = normalizeSearch([
+      emp(c), c.mails, c.revenue, c.om, c.am, c.estado
+    ].join(' '));
+    if (!blob.includes(q)) return false;
+  }
+  return true;
+}
+
+function normalizeSearch(v) {
+  return String(v || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function datePasses(value) {
+  const f = getFilters();
+  if (!f.from && !f.to) return true;
+  if (!value) return false;
+
+  const d = new Date(value);
+  if (isNaN(d)) return false;
+
+  if (f.from) {
+    const from = new Date(f.from + 'T00:00:00');
+    if (d < from) return false;
+  }
+  if (f.to) {
+    const to = new Date(f.to + 'T23:59:59');
+    if (d > to) return false;
+  }
+  return true;
+}
+
+function filteredStage(stage) {
+  return (state.data.grouped[stage] || []).filter(matchesCommonFilters);
+}
+
+function filteredCalendar() {
+  return (state.data.calendar || []).filter(function(c) {
+    return matchesCommonFilters(c) && datePasses(c.fecha || c['Fecha']);
+  });
+}
+
+function filteredHistory() {
+  return (state.data.historic || []).filter(function(c) {
+    return matchesCommonFilters(c) && datePasses(c.fechaCompleto || c.fechaReunion);
+  });
 }
 
 function normalizeData(raw) {
@@ -673,6 +848,11 @@ function setView(v) {
     const el = id('tab-' + t);
     if (el) el.classList.toggle('active', t === v);
   });
+
+  if (v === 'pipeline' && !state.loaded.pipeline) return loadPipelineData();
+  if (v === 'calendar' && !state.loaded.calendar) return loadCalendarData();
+  if (v === 'history' && !state.loaded.history) return loadHistoryData();
+
   render();
 }
 
@@ -699,8 +879,9 @@ function renderAlerts() {
   const el = id('alertStrip');
   let html = '';
 
-  if ((state.data.elevated || []).length) {
-    const pills = state.data.elevated.map(c =>
+  const elevatedVisible = (state.data.elevated || []).filter(matchesCommonFilters);
+  if (elevatedVisible.length) {
+    const pills = elevatedVisible.map(c =>
       `<button class="pill red" onclick="openProfile('${esc(cid(c))}')">${esc(emp(c))} · ${c.daysInStage}d</button>`
     ).join('');
     html += `<div class="alertCard">
@@ -725,16 +906,20 @@ function renderAlerts() {
    PIPELINE
 ========================================================= */
 function renderPipeline() {
-  const d = state.data;
+  const bienvenida = filteredStage('Bienvenida');
+  const discovery  = filteredStage('Discovery');
+  const calendario = filteredStage('Calendario');
+  const grouped = { Bienvenida:bienvenida, Discovery:discovery, Calendario:calendario };
+
   id('main').innerHTML = `
     <div class="stageCards">
-      ${stageCard('Bienvenida', d.counts.bienvenida, 'Etapa inicial', 'bg-blue')}
-      ${stageCard('Discovery',  d.counts.discovery,  'Respondieron el Form', 'bg-yellow')}
-      ${stageCard('Calendario', d.counts.calendario, 'Con sesión agendada', 'bg-green')}
-      ${stageCard('Histórico',  d.counts.historico,  'Completados', 'bg-gray')}
+      ${stageCard('Bienvenida', bienvenida.length, 'Etapa inicial', 'bg-blue')}
+      ${stageCard('Discovery',  discovery.length,  'Respondieron el Form', 'bg-yellow')}
+      ${stageCard('Calendario', calendario.length, 'Con sesión agendada', 'bg-green')}
+      ${stageCard('Histórico',  state.data.counts.historico, 'Completados', 'bg-gray')}
     </div>
     <div class="pipeline">
-      ${['Bienvenida','Discovery','Calendario'].map(s => renderColumn(s, d.grouped[s] || [])).join('')}
+      ${['Bienvenida','Discovery','Calendario'].map(s => renderColumn(s, grouped[s])).join('')}
     </div>
   `;
 }
@@ -898,7 +1083,7 @@ function getWeekStart(d) {
 }
 
 function renderCalBody() {
-  const list = state.data.calendar || [];
+  const list = filteredCalendar();
 
   // Index eventos por fecha string YYYY-MM-DD
   const byDate = {};
@@ -1024,7 +1209,7 @@ function renderWeekView(byDate, DAYS_ES) {
    HISTÓRICO
 ========================================================= */
 function renderHistory() {
-  const list = state.data.historic || [];
+  const list = filteredHistory();
 
   const tableRows = list.length ? list.map(c => `
     <tr style="border-bottom:1px solid var(--border)">
@@ -1066,7 +1251,7 @@ function renderHistory() {
 /* =========================================================
    ACCIONES RÁPIDAS
 ========================================================= */
-async function syncNow()           { await runAction('syncFormResponses',  {},          'Form sincronizado.'); }
+async function syncNow()           { await runAction('syncFormResponses', {}, 'Form sincronizado.', 'pipeline'); }
 async function sendWelcome(cId)    { await runAction('sendWelcomeEmail',   { id: cId }, 'Bienvenida enviada.'); }
 async function sendDiscovery(cId) {
   // Buscar el cliente en state para ver si tiene fecha y link
@@ -1108,20 +1293,21 @@ async function saveAndSendDiscovery() {
   const cId   = val('discId');
   const fecha = val('discFecha');
   const link  = val('discLink');
+
   if (!fecha) { toast('Completá la fecha de la sesión.', true); return; }
   if (!link)  { toast('Completá el link de la reunión.', true); return; }
-  // Guardar datos y luego enviar
+
   setLoading(true);
   try {
-    await callServer('updateClient', {
+    const res = await callServer('saveAndSendDiscovery', {
       id: cId,
-      'Fecha Reunión': fecha,
-      'Link Reunión':  link
+      fecha: fecha,
+      link: link
     });
-    const res = await callServer('sendDiscoveryEmail', { id: cId });
     toast((res && res.message) || 'Mail Discovery enviado.');
     closeModal();
-    await loadData();
+    state.loaded.calendar = false;
+    await loadPipelineData();
   } catch(e) {
     toast('Error: ' + errMsg(e), true);
   } finally {
@@ -1129,7 +1315,7 @@ async function saveAndSendDiscovery() {
   }
 }
 async function sendCalendar(cId)   { await runAction('sendCalendarEmail',  { id: cId }, 'Mail Calendario enviado.'); }
-async function sendReminder(cId, stage) { await runAction('sendStageReminder', { id: cId, stage }, 'FUP enviado.'); }
+async function sendReminder(cId, stage) { await runAction('sendStageReminder', { id: cId, stage }, 'FUP enviado.', false); }
 
 async function manualToDiscovery(cId) {
   if (!confirm('¿Mover este cliente a Discovery manualmente?')) return;
@@ -1138,26 +1324,35 @@ async function manualToDiscovery(cId) {
 
 async function completeClient(cId) {
   if (!confirm('¿Marcar como completado y mover a Histórico?')) return;
+  state.loaded.history = false;
+  state.loaded.calendar = false;
   await runAction('completeClient', { id: cId }, 'Cliente movido a Histórico.');
 }
-async function runAction(action, payload, ok, refresh = true) {
-  setLoading(true);
 
+async function runAction(action, payload, ok, refreshMode = 'pipeline') {
+  setLoading(true);
   try {
     const res = await callServer(action, payload || {});
-
     toast((res && res.message) || ok);
 
-    if (refresh) {
-      await loadData();
+    if (refreshMode === false) return res;
+
+    if (refreshMode === 'pipeline') {
+      await loadPipelineData();
+    } else if (refreshMode === 'calendar') {
+      state.loaded.calendar = false;
+      await loadCalendarData();
+    } else if (refreshMode === 'history') {
+      state.loaded.history = false;
+      await loadHistoryData();
+    } else if (refreshMode === 'current') {
+      await loadData(true);
     }
 
     return res;
-
   } catch (e) {
     toast('Error: ' + errMsg(e), true);
     throw e;
-
   } finally {
     setLoading(false);
   }
@@ -1324,7 +1519,7 @@ async function saveNewClient() {
     }
     toast((res && res.message) || 'Cliente guardado.');
     closeModal();
-    await loadData();
+    await loadPipelineData();
   } catch (e) {
     toast('Error: ' + errMsg(e), true);
   } finally {
@@ -1571,9 +1766,10 @@ async function saveMeeting() {
   const fechaVal = val('confirmFecha');
   if (!fechaVal) { toast('Completá la fecha de la reunión.', true); return; }
   // Enviar como string ISO directo del input datetime-local
+  state.loaded.calendar = false;
   await runAction('confirmMeeting', {
     id:           val('confirmId'),
-    fecha:        fechaVal,           // ej: "2026-07-09T11:00"
+    fecha:        fechaVal,
     link:         val('confirmLink'),
     observaciones:val('confirmObs')
   }, 'Reunión confirmada.');
@@ -1668,23 +1864,23 @@ function toggleSelectAll(checked) {
 }
 
 async function ignoreMassive() {
-  var checked = Array.from(document.querySelectorAll('.unmatch-cb:checked'));
+  const checked = Array.from(document.querySelectorAll('.unmatch-cb:checked'));
   if (!checked.length) { toast('Seleccioná al menos una respuesta.', true); return; }
   if (!confirm('¿Ignorar ' + checked.length + ' respuesta(s)? No se puede deshacer.')) return;
+
+  const responseIds = checked.map(cb => cb.dataset.id);
+
   setLoading(true);
-  var done = 0;
-  for (var i = 0; i < checked.length; i++) {
-    try {
-      await callServer('ignoreUnmatchedResponse', { responseId: checked[i].dataset.id });
-      var card = document.getElementById('unmatch-card-' + checked[i].dataset.id);
-      if (card) card.remove();
-      done++;
-    } catch(e) { console.error(e); }
+  try {
+    const res = await callServer('ignoreUnmatchedResponses', { responseIds });
+    toast((res && res.message) || (responseIds.length + ' respuesta(s) ignoradas.'));
+    closeModal();
+    await loadPipelineData();
+  } catch(e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
   }
-  setLoading(false);
-  toast(done + ' respuesta(s) ignoradas.');
-  await loadData();
-  closeModal();
 }
 
 async function ignoreOne(rId) {
