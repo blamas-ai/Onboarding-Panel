@@ -389,22 +389,48 @@ function emptyData() {
 /* =========================================================
    SERVER
 ========================================================= */
-function callServer(action, payload) {
-  return new Promise((resolve, reject) => {
-    if (typeof google === 'undefined' || !google.script) {
-      reject(new Error('Abrí el panel desde el menú "Onboarding Lebane > Abrir panel".'));
-      return;
+async function callServer(action, payload) {
+  try {
+    const response = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: action,
+        payload: payload || {}
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || `Error HTTP ${response.status}`
+      );
     }
 
-    google.script.run
-      .withSuccessHandler(function(res) {
-        resolve(res);
-      })
-      .withFailureHandler(function(err) {
-        reject(err);
-      })
-      .apiRouter(action, payload || {});
-  });
+    if (data && data.error) {
+      throw new Error(
+        data.message || 'Error del servidor.'
+      );
+    }
+
+    console.log(
+      '[callServer] ' + action + ' OK:',
+      data
+    );
+
+    return data;
+
+  } catch (err) {
+    console.error(
+      '[callServer] ' + action + ' ERROR:',
+      err
+    );
+
+    throw err;
+  }
 }
 
 /* =========================================================
