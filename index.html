@@ -238,6 +238,34 @@
     /* ── FORM GRID ── */
     .formGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .full { grid-column:1/-1; }
+
+    /* ── PERFIL CLIENTE ── */
+    .profileStack { display:grid; gap:0; margin:0 -18px; }
+    .profileSection {
+      padding:16px 18px;
+      border-top:1px solid var(--border);
+    }
+    .profileSection:first-child { border-top:0; }
+    .profileSection.soft { background:#F7F8FA; }
+    .profileSection.white { background:#FFFFFF; }
+    .profileSection .sectionTitle {
+      margin:0 0 12px;
+    }
+    .profileSection .formGrid { gap:10px; }
+    .profileSection input,
+    .profileSection select,
+    .profileSection textarea { background:#FFFFFF; }
+    .profileSection.soft input,
+    .profileSection.soft select,
+    .profileSection.soft textarea {
+      border-color:#DDE2E8;
+    }
+    .profileSectionHint {
+      margin:-5px 0 12px;
+      font-size:12px;
+      line-height:1.45;
+      color:var(--muted);
+    }
     .scheduleBox {
       display:none; border:1px dashed #C7D8FF; background:#F8FBFF;
       border-radius:12px; padding:12px;
@@ -324,6 +352,8 @@
       .topActions { justify-content:flex-start; flex-wrap:wrap; }
       .topActions > .btn:not(.bell) { padding:8px 10px; }
       .settingsMenu { position:fixed; left:12px; right:12px; top:auto; width:auto; }
+      .profileStack { margin:0 -18px; }
+      .profileSection { padding:14px 18px; }
     }
   </style>
 </head>
@@ -1580,36 +1610,91 @@ function profileHtml(c, audit, fup, form) {
   return `
     <input type="hidden" id="editId" value="${esc(cId)}">
 
-    <p class="sectionTitle">Datos del cliente</p>
-    <div class="formGrid">
-      <div><label>Empresa</label><input id="editEmpresa" value="${esc(emp(c))}"></div>
-      <div><label>Revenue</label><input id="editRevenue" value="${esc(c.revenue||c['Revenue']||'')}"></div>
-      <div class="full"><label>Mails</label><input id="editMails" value="${esc(c.mails||c['Mails']||'')}"></div>
-      <div>
-        <label>Etapa</label>
-        <select id="editEtapa">
-          ${['Bienvenida','Discovery','Calendario'].map(s => `<option ${etapa===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
-      <div><label>Estado</label><input id="editEstado" value="${esc(c.estado||c['Estado']||'')}"></div>
-      <div>
-        <label>OM</label>
-        <select id="editOm">
-          <option value=""></option>
-          ${OM_LIST.map(o => `<option ${(c.om||c['OM'])===o?'selected':''}>${o}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <label>AM</label>
-        <select id="editAm">
-          <option value=""></option>
-          ${AM_LIST.map(a => `<option ${(c.am||c['AM'])===a?'selected':''}>${a}</option>`).join('')}
-        </select>
-      </div>
-      <div><label>Fecha reunión</label><input id="editFechaReunion" type="datetime-local" value="${toDateTimeLocal(c.fechaReunion||c['Fecha Reunión']||'')}"></div>
-      <div><label>Link reunión</label><input id="editLinkReunion" value="${esc(c.linkReunion||c['Link Reunión']||'')}"></div>
-      <div class="full"><label>Observaciones</label><textarea id="editObs">${esc(c.observaciones||c['Observaciones']||'')}</textarea></div>
-      <div class="full"><label>Comentarios internos</label><textarea id="editComentarios">${esc(c.comentarios||c['Comentarios Internos']||'')}</textarea></div>
+    <div class="profileStack">
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Datos del cliente</p>
+        <div class="formGrid">
+          <div>
+            <label>Empresa</label>
+            <input id="editEmpresa" value="${esc(emp(c))}">
+          </div>
+          <div>
+            <label>Revenue</label>
+            <input id="editRevenue" value="${esc(c.revenue||c['Revenue']||'')}">
+          </div>
+          <div class="full">
+            <label>Mails</label>
+            <input id="editMails" value="${esc(c.mails||c['Mails']||'')}">
+          </div>
+        </div>
+      </section>
+
+      <section class="profileSection white">
+        <p class="sectionTitle">Etapa y estado</p>
+        <div class="formGrid">
+          <div>
+            <label>Etapa</label>
+            <select id="editEtapa">
+              ${['Bienvenida','Discovery','Calendario'].map(s => `<option ${etapa===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>Estado</label>
+            <input id="editEstado" value="${esc(c.estado||c['Estado']||'')}">
+          </div>
+        </div>
+      </section>
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Asignación interna</p>
+        <p class="profileSectionHint">Responsables asignados para el seguimiento del onboarding.</p>
+        <div class="formGrid">
+          <div>
+            <label>OM</label>
+            <select id="editOm">
+              <option value=""></option>
+              ${OM_LIST.map(o => `<option ${(c.om||c['OM'])===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>AM</label>
+            <select id="editAm">
+              <option value=""></option>
+              ${AM_LIST.map(a => `<option ${(c.am||c['AM'])===a?'selected':''}>${a}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="profileSection white">
+        <p class="sectionTitle">Reunión</p>
+        <div class="formGrid">
+          <div>
+            <label>Fecha reunión</label>
+            <input id="editFechaReunion" type="datetime-local" value="${toDateTimeLocal(c.fechaReunion||c['Fecha Reunión']||'')}">
+          </div>
+          <div>
+            <label>Link reunión</label>
+            <input id="editLinkReunion" value="${esc(c.linkReunion||c['Link Reunión']||'')}">
+          </div>
+        </div>
+      </section>
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Notas y seguimiento</p>
+        <div class="formGrid">
+          <div class="full">
+            <label>Observaciones</label>
+            <textarea id="editObs">${esc(c.observaciones||c['Observaciones']||'')}</textarea>
+          </div>
+          <div class="full">
+            <label>Comentarios internos</label>
+            <textarea id="editComentarios">${esc(c.comentarios||c['Comentarios Internos']||'')}</textarea>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <div class="divider"></div>
