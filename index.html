@@ -160,18 +160,32 @@
     /* ── CLIENT CARD ── */
     .clientCard {
       position:relative; background:#fff; border:1px solid var(--border);
-      border-radius:16px; padding:13px; box-shadow:0 5px 14px rgba(17,24,39,.04);
+      border-radius:16px; padding:14px; box-shadow:0 5px 14px rgba(17,24,39,.04);
       transition:.12s ease;
     }
     .clientCard:hover { box-shadow:0 8px 22px rgba(17,24,39,.08); }
     .clientCard.elevated { border-color:#FCA5A5; box-shadow:0 0 0 2px rgba(239,68,68,.10); }
-    .clientTitle { font-size:14px; font-weight:900; margin:0 0 4px; padding-right:80px; line-height:1.3; }
+    .cardHeader { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .clientTitle { font-size:14px; font-weight:900; margin:0 0 4px; line-height:1.3; }
+    .cardTools { display:flex; gap:4px; flex-shrink:0; }
+    .toolBtn {
+      border:1px solid var(--border); background:#fff; color:#4B5563;
+      border-radius:8px; padding:5px 8px; font-size:11px; font-weight:800;
+      cursor:pointer; line-height:1; transition:.12s ease;
+    }
+    .toolBtn:hover { border-color:#CBD5E1; background:#F8FAFC; color:#111827; }
     .meta { font-size:12px; color:var(--muted); line-height:1.4; word-break:break-word; }
-
-    .quick { position:absolute; top:11px; right:11px; display:grid; gap:5px; width:70px; }
 
     /* ── TAGS / PILLS ── */
     .tags,.actions { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
+    .cardLinks { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid #F1F5F9; }
+    .cardLinks .btn { background:#fff; color:#475467; }
+    .stageActions { display:flex; gap:7px; margin-top:8px; }
+    .stageActions .btn { flex:1 1 0; min-width:0; padding:8px 9px; }
+    .btn.stageMove { background:#F8FAFC; border-color:#D7DEE8; color:#344054; }
+    .btn.stageMove:hover { background:#F1F5F9; }
+    .btn.stageComplete { background:#ECFDF3; border-color:#ABEFC6; color:#067647; }
+    .btn.stageComplete:hover { background:#D1FADF; }
     .pill {
       display:inline-flex; align-items:center; border-radius:999px;
       padding:4px 9px; border:1px solid var(--border); background:#fff;
@@ -972,28 +986,36 @@ function renderClientCard(c) {
   const omVal  = (c.om || c['OM'] || '');
   const amVal  = (c.am || c['AM'] || '');
   const days   = c.daysInStage || 0;
+  const estado = c.estado || c['Estado'] || '';
 
   return `
     <div class="clientCard${c.elevated ? ' elevated' : ''}">
-      <div class="quick">
-        <button class="btn small" onclick="sendReminder('${esc(cId)}','${esc(etapa)}')">FUP</button>
-        <button class="btn small" onclick="openProfile('${esc(cId)}')">Editar</button>
+      <div class="cardHeader">
+        <div style="min-width:0;flex:1">
+          <h3 class="clientTitle">${esc(emp(c))}</h3>
+          <div class="meta">${esc(c.mails || c['Mails'] || '')}</div>
+          <div class="meta">Revenue: ${esc(c.revenue || c['Revenue'] || '-')}</div>
+        </div>
+        <div class="cardTools">
+          <button class="toolBtn" onclick="sendReminder('${esc(cId)}','${esc(etapa)}')" title="Enviar seguimiento">FUP</button>
+          <button class="toolBtn" onclick="openProfile('${esc(cId)}')" title="Editar cliente">Editar</button>
+        </div>
       </div>
-      <h3 class="clientTitle">${esc(emp(c))}</h3>
-      <div class="meta">${esc(c.mails || c['Mails'] || '')}</div>
-      <div class="meta">Revenue: ${esc(c.revenue || c['Revenue'] || '-')}</div>
+
       <div class="tags">
         ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
         ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
         ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
         ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
+        ${etapa === 'Calendario' && estado ? `<span class="pill ${/agendad|confirmad/i.test(estado) ? 'green' : 'yellow'}">${esc(estado)}</span>` : ''}
         <span class="pill ${days >= 7 ? 'red' : 'gray'}">${days}d</span>
       </div>
-      <div class="actions">
+
+      <div class="cardLinks">
         <button class="btn small" onclick="openProfile('${esc(cId)}')">Ver perfil</button>
-        ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Form</button>` : ''}
-        ${stageButtons(c)}
+        ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Ver Form</button>` : ''}
       </div>
+      <div class="stageActions">${stageButtons(c)}</div>
     </div>`;
 }
 
@@ -1003,22 +1025,23 @@ function stageButtons(c) {
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
 
   if (etapa === 'Bienvenida') {
-    var btns = '';
-    if (bienvenida !== '✅') {
-      btns += `<button class="btn small primary" onclick="sendWelcome('${esc(cId)}')">Enviar bienvenida</button>`;
-    }
-    btns += `<button class="btn small" style="border-color:#F2B705;color:#92400E;background:#FFF7D6" onclick="manualToDiscovery('${esc(cId)}')">→ Discovery</button>`;
-    return btns;
+    return `
+      ${bienvenida !== '✅'
+        ? `<button class="btn small primary" onclick="sendWelcome('${esc(cId)}')">Enviar bienvenida</button>`
+        : `<button class="btn small" disabled>Bienvenida enviada ✓</button>`}
+      <button class="btn small stageMove" onclick="manualToDiscovery('${esc(cId)}')">Pasar a Discovery →</button>`;
   }
+
   if (etapa === 'Discovery') {
     return `
-      <button class="btn small primary" onclick="sendDiscovery('${esc(cId)}')">Mail Discovery</button>
-      <button class="btn small dark"    onclick="sendCalendar('${esc(cId)}')">Mail Calendario</button>`;
+      <button class="btn small primary" onclick="sendDiscovery('${esc(cId)}')">Enviar sesión</button>
+      <button class="btn small stageMove" onclick="moveToCalendar('${esc(cId)}')">Pasar a Calendario →</button>`;
   }
+
   if (etapa === 'Calendario') {
     return `
       <button class="btn small primary" onclick="openConfirmMeeting('${esc(cId)}')">Confirmar agenda</button>
-      <button class="btn small success" onclick="completeClient('${esc(cId)}')">Completar</button>`;
+      <button class="btn small stageComplete" onclick="completeClient('${esc(cId)}')">Completar</button>`;
   }
   return '';
 }
@@ -1314,7 +1337,11 @@ async function saveAndSendDiscovery() {
     setLoading(false);
   }
 }
-async function sendCalendar(cId)   { await runAction('sendCalendarEmail',  { id: cId }, 'Mail Calendario enviado.'); }
+async function moveToCalendar(cId) {
+  if (!confirm('¿Pasar este cliente a Calendario? Se asignará OM/AM si falta y no se enviará ningún mail.')) return;
+  state.loaded.calendar = false;
+  await runAction('moveToCalendar', { id: cId }, 'Cliente movido a Calendario. No se envió ningún mail.');
+}
 async function sendReminder(cId, stage) { await runAction('sendStageReminder', { id: cId, stage }, 'FUP enviado.', false); }
 
 async function manualToDiscovery(cId) {
@@ -1750,29 +1777,33 @@ async function saveEdit() {
    CONFIRMAR REUNIÓN
 ========================================================= */
 function openConfirmMeeting(cId) {
-  openModal('Confirmar reunión agendada', `
+  openModal('Confirmar agenda y avisar al cliente', `
     <input type="hidden" id="confirmId" value="${esc(cId)}">
+    <div style="background:#EEF4FF;border:1px solid #D7E3FF;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.55;color:#344054;">
+      Al confirmar, se guardará la reunión y <strong>se enviará automáticamente el mail de confirmación al cliente</strong>.
+    </div>
     <div class="formGrid">
       <div><label>Fecha y hora *</label><input id="confirmFecha" type="datetime-local"></div>
-      <div><label>Link reunión</label><input id="confirmLink" placeholder="Meet / Zoom / Calendario..."></div>
-      <div class="full"><label>Observaciones</label><textarea id="confirmObs"></textarea></div>
+      <div><label>Link reunión *</label><input id="confirmLink" placeholder="https://meet.google.com/..."></div>
+      <div class="full"><label>Observaciones internas</label><textarea id="confirmObs" placeholder="Opcional. No se incluye en el mail."></textarea></div>
     </div>`,
     `<button class="btn" onclick="closeModal()">Cancelar</button>
-     <button class="btn primary" onclick="saveMeeting()">Confirmar reunión</button>`
+     <button class="btn primary" onclick="saveMeeting()">Confirmar y enviar mail</button>`
   );
 }
 
 async function saveMeeting() {
   const fechaVal = val('confirmFecha');
+  const linkVal  = val('confirmLink');
   if (!fechaVal) { toast('Completá la fecha de la reunión.', true); return; }
-  // Enviar como string ISO directo del input datetime-local
+  if (!linkVal)  { toast('Completá el link de la reunión para enviar la confirmación.', true); return; }
   state.loaded.calendar = false;
   await runAction('confirmMeeting', {
     id:           val('confirmId'),
     fecha:        fechaVal,
-    link:         val('confirmLink'),
+    link:         linkVal,
     observaciones:val('confirmObs')
-  }, 'Reunión confirmada.');
+  }, 'Agenda confirmada y mail enviado.');
   closeModal();
 }
 
