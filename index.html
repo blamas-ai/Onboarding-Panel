@@ -959,7 +959,7 @@ function renderPipeline() {
     <div class="stageCards">
       ${stageCard('Bienvenida', bienvenida.length, 'Etapa inicial', 'bg-blue')}
       ${stageCard('Discovery',  discovery.length,  'Respondieron el Form', 'bg-yellow')}
-      ${stageCard('Calendario', calendario.length, 'En gestión de agenda', 'bg-green')}
+      ${stageCard('Calendario', calendario.length, 'Con sesión agendada', 'bg-green')}
       ${stageCard('Histórico',  state.data.counts.historico, 'Completados', 'bg-gray')}
     </div>
     <div class="pipeline">
@@ -1013,6 +1013,7 @@ function renderClientCard(c) {
   const etapa  = getEtapa(c);
   const form   = (c.respondioForm || c['Respondió Form'] || 'NO');
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
+  const mailCalendario = (c.mailCalendario || c['Mail Calendario Enviado'] || '');
   const omVal  = (c.om || c['OM'] || '');
   const amVal  = (c.am || c['AM'] || '');
   const days   = c.daysInStage || 0;
@@ -1037,8 +1038,7 @@ function renderClientCard(c) {
         ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
         ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
         ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
-        ${etapa === 'Calendario' && (c.mailCalendario || c['Mail Calendario Enviado']) === '✅'
-          ? '<span class="pill green">Agenda enviada ✓</span>' : ''}
+        ${etapa === 'Calendario' ? (mailCalendario === '✅' ? '<span class="pill green">Agenda enviada ✓</span>' : '<span class="pill yellow">Agenda pendiente</span>') : ''}
         ${etapa === 'Calendario' && estado ? `<span class="pill ${/agendad|confirmad/i.test(estado) ? 'green' : 'yellow'}">${esc(estado)}</span>` : ''}
         <span class="pill ${days >= 7 ? 'red' : 'gray'}">${days}d</span>
       </div>
@@ -1046,6 +1046,7 @@ function renderClientCard(c) {
       <div class="cardLinks">
         <button class="btn small" onclick="openProfile('${esc(cId)}')">Ver perfil</button>
         ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Ver Form</button>` : ''}
+        ${etapa === 'Discovery' ? `<button class="btn small" onclick="copyClientEmails('${esc(cId)}')">Copiar mails</button>` : ''}
       </div>
       <div class="stageActions">${stageButtons(c)}</div>
     </div>`;
@@ -1055,8 +1056,6 @@ function stageButtons(c) {
   const cId   = cid(c);
   const etapa = getEtapa(c);
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
-  const agendaEnviada = (c.mailCalendario || c['Mail Calendario Enviado'] || '') === '✅';
-  const reunionConfirmada = !!(c.fechaReunion || c['Fecha Reunión']);
 
   if (etapa === 'Bienvenida') {
     return `
@@ -1073,18 +1072,10 @@ function stageButtons(c) {
   }
 
   if (etapa === 'Calendario') {
+    const agendaEnviada = (c.mailCalendario || c['Mail Calendario Enviado'] || '') === '✅';
     return `
-      <button class="btn small primary" onclick="sendCalendarAgenda('${esc(cId)}')">
-        ${agendaEnviada ? 'Reenviar agenda' : 'Enviar agenda'}
-      </button>
-      <button class="btn small stageMove" onclick="openConfirmMeeting('${esc(cId)}')">
-        ${reunionConfirmada ? 'Editar reunión' : 'Confirmar reunión'}
-      </button>
-      <button class="btn small stageComplete"
-        onclick="completeClient('${esc(cId)}')"
-        ${reunionConfirmada ? '' : 'disabled title="Confirmá primero la fecha de la reunión"'}>
-        Completar
-      </button>`;
+      <button class="btn small ${agendaEnviada ? '' : 'primary'}" onclick="sendCalendarInvite('${esc(cId)}')">${agendaEnviada ? 'Reenviar agenda' : 'Enviar agenda'}</button>
+      <button class="btn small stageMove" onclick="openConfirmMeeting('${esc(cId)}')">Registrar reunión</button>`;
   }
   return '';
 }
@@ -1327,23 +1318,23 @@ async function sendDiscovery(cId) {
     ...(state.data.grouped.Calendario  || [])
   ];
   const client = all.find(c => cid(c) === cId);
-  const fecha  = client ? (client.fechaReunion  || client['Fecha Reunión']  || '') : '';
-  const link   = client ? (client.linkReunion   || client['Link Reunión']   || '') : '';
+  const fecha  = client ? (client.fechaDiscovery || client['Fecha Discovery'] || '') : '';
+  const link   = client ? (client.linkDiscovery  || client['Link Discovery']  || '') : '';
 
   if (!fecha || !link) {
     // Abrir pop-up para completar datos y enviar
     openModal('Datos para mail de Discovery', `
       <p style="color:var(--muted);margin-bottom:14px;font-size:13px;">
-        Completá la fecha y el link de la sesión para poder enviar el mail de Discovery.
+        Completá la fecha de Discovery y el link de Meet para poder enviar el mail de la sesión.
       </p>
       <input type="hidden" id="discId" value="${esc(cId)}">
       <div class="formGrid">
         <div class="full">
-          <label>Fecha y hora de la sesión *</label>
+          <label>Fecha y hora Discovery *</label>
           <input id="discFecha" type="datetime-local" value="${esc(toDateTimeLocal(fecha))}">
         </div>
         <div class="full">
-          <label>Link de la reunión *</label>
+          <label>Link Meet Discovery *</label>
           <input id="discLink" placeholder="https://meet.google.com/..." value="${esc(link)}">
         </div>
       </div>`,
@@ -1385,16 +1376,35 @@ async function moveToCalendar(cId) {
   state.loaded.calendar = false;
   await runAction('moveToCalendar', { id: cId }, 'Cliente movido a Calendario. No se envió ningún mail.');
 }
-
-async function sendCalendarAgenda(cId) {
-  await runAction(
-    'sendCalendarEmail',
-    { id: cId },
-    'Mail de agenda enviado.',
-    'pipeline'
-  );
+async function sendCalendarInvite(cId) {
+  await runAction('sendCalendarEmail', { id: cId }, 'Mail de agenda enviado.');
 }
 
+async function copyClientEmails(cId) {
+  const all = [
+    ...(state.data.grouped.Bienvenida || []),
+    ...(state.data.grouped.Discovery || []),
+    ...(state.data.grouped.Calendario || [])
+  ];
+  const client = all.find(c => cid(c) === cId);
+  const mails = client ? String(client.mails || client['Mails'] || '').trim() : '';
+  if (!mails) { toast('Este cliente no tiene mails cargados.', true); return; }
+
+  try {
+    await navigator.clipboard.writeText(mails);
+    toast('Mails copiados al portapapeles.');
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = mails;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('Mails copiados al portapapeles.');
+  }
+}
 async function sendReminder(cId, stage) { await runAction('sendStageReminder', { id: cId, stage }, 'FUP enviado.', false); }
 
 async function manualToDiscovery(cId) {
@@ -1502,12 +1512,20 @@ function openAddModal() {
             <input id="addEstado" placeholder="ej: En proceso, Completado...">
           </div>
           <div>
-            <label>Fecha de reunión (si tiene)</label>
+            <label>Fecha Discovery (si tiene)</label>
+            <input id="addFechaDiscovery" type="datetime-local">
+          </div>
+          <div>
+            <label>Link Meet Discovery</label>
+            <input id="addLinkDiscovery" placeholder="https://meet.google.com/...">
+          </div>
+          <div>
+            <label>Fecha reunión implementación</label>
             <input id="addFechaReunion" type="datetime-local">
           </div>
           <div>
-            <label>Link de reunión</label>
-            <input id="addLinkReunion" placeholder="https://meet...">
+            <label>Link reunión implementación</label>
+            <input id="addLinkReunion" placeholder="Opcional">
           </div>
           <div class="full" style="display:flex;gap:16px;flex-wrap:wrap">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-transform:none">
@@ -1571,6 +1589,8 @@ async function saveNewClient() {
         am:            val('addAm'),
         etapa:         val('addEtapa') || 'Bienvenida',
         estado:        val('addEstado'),
+        fechaDiscovery: val('addFechaDiscovery'),
+        linkDiscovery:  val('addLinkDiscovery'),
         fechaReunion:  val('addFechaReunion'),
         linkReunion:   val('addLinkReunion'),
         mailBienvenida:  document.getElementById('addMailBienvenida')?.checked || false,
@@ -1691,20 +1711,36 @@ function profileHtml(c, audit, fup, form) {
       </section>
 
       <section class="profileSection white">
-        <p class="sectionTitle">Reunión</p>
+        <p class="sectionTitle">Sesión de Discovery</p>
+        <p class="profileSectionHint">Datos que se envían al cliente para sumarse a la sesión de introducción.</p>
         <div class="formGrid">
           <div>
-            <label>Fecha reunión</label>
-            <input id="editFechaReunion" type="datetime-local" value="${toDateTimeLocal(c.fechaReunion||c['Fecha Reunión']||'')}">
+            <label>Fecha y hora Discovery</label>
+            <input id="editFechaDiscovery" type="datetime-local" value="${toDateTimeLocal(c.fechaDiscovery||c['Fecha Discovery']||'')}">
           </div>
           <div>
-            <label>Link reunión</label>
-            <input id="editLinkReunion" value="${esc(c.linkReunion||c['Link Reunión']||'')}">
+            <label>Link Meet Discovery</label>
+            <input id="editLinkDiscovery" value="${esc(c.linkDiscovery||c['Link Discovery']||'')}">
           </div>
         </div>
       </section>
 
       <section class="profileSection soft">
+        <p class="sectionTitle">Reunión de implementación</p>
+        <p class="profileSectionHint">Información interna. Cuando se registra esta fecha, el cliente pasa a Histórico y queda visible en Calendario.</p>
+        <div class="formGrid">
+          <div>
+            <label>Fecha y hora reunión</label>
+            <input id="editFechaReunion" type="datetime-local" value="${toDateTimeLocal(c.fechaReunion||c['Fecha Reunión']||'')}">
+          </div>
+          <div>
+            <label>Link reunión (opcional)</label>
+            <input id="editLinkReunion" value="${esc(c.linkReunion||c['Link Reunión']||'')}">
+          </div>
+        </div>
+      </section>
+
+      <section class="profileSection white">
         <p class="sectionTitle">Notas y seguimiento</p>
         <div class="formGrid">
           <div class="full">
@@ -1872,6 +1908,8 @@ async function saveEdit() {
     Empresa: val('editEmpresa'), Mails: val('editMails'),
     Revenue: val('editRevenue'), Etapa: val('editEtapa'),
     Estado: val('editEstado'), OM: val('editOm'), AM: val('editAm'),
+    'Fecha Discovery': val('editFechaDiscovery'),
+    'Link Discovery': val('editLinkDiscovery'),
     'Fecha Reunión': val('editFechaReunion'),
     'Link Reunión': val('editLinkReunion'),
     Observaciones: val('editObs'),
@@ -1885,49 +1923,39 @@ async function saveEdit() {
    CONFIRMAR REUNIÓN
 ========================================================= */
 function openConfirmMeeting(cId) {
-  openModal('Confirmar reunión · uso interno', `
+  openModal('Registrar reunión de implementación', `
     <input type="hidden" id="confirmId" value="${esc(cId)}">
-    <div style="background:#F7F8FA;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.55;color:#475467;">
-      Esta información es <strong>interna</strong>. No se envía ningún mail al cliente.
-      La fecha queda registrada en el Calendario y luego se conserva cuando el cliente pasa a Histórico.
+    <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.55;color:#344054;">
+      <strong>Uso interno:</strong> esta acción no envía ningún mail. Al guardar, la reunión queda registrada en el Calendario y el cliente pasa automáticamente a Histórico.
     </div>
     <div class="formGrid">
-      <div>
-        <label>Fecha y hora *</label>
-        <input id="confirmFecha" type="datetime-local">
-      </div>
-      <div>
-        <label>Link reunión</label>
-        <input id="confirmLink" placeholder="Meet / Zoom / otro link (opcional)">
-      </div>
-      <div class="full">
-        <label>Observaciones internas</label>
-        <textarea id="confirmObs" placeholder="Opcional. Solo uso interno."></textarea>
-      </div>
+      <div class="full"><label>Fecha y hora de la reunión *</label><input id="confirmFecha" type="datetime-local"></div>
+      <div class="full"><label>Link de reunión (opcional)</label><input id="confirmLink" placeholder="Meet / Zoom / otro link, si corresponde"></div>
+      <div class="full"><label>Observaciones internas</label><textarea id="confirmObs" placeholder="Opcional"></textarea></div>
     </div>`,
     `<button class="btn" onclick="closeModal()">Cancelar</button>
-     <button class="btn primary" onclick="saveMeeting()">Guardar confirmación</button>`
+     <button class="btn primary" onclick="saveMeeting()">Guardar y pasar a Histórico</button>`
   );
 }
 
 async function saveMeeting() {
   const fechaVal = val('confirmFecha');
-  if (!fechaVal) {
-    toast('Completá la fecha y hora de la reunión.', true);
-    return;
-  }
+  const linkVal  = val('confirmLink');
+  if (!fechaVal) { toast('Completá la fecha y hora de la reunión.', true); return; }
 
   state.loaded.calendar = false;
+  state.loaded.history = false;
 
   await runAction('confirmMeeting', {
-    id:            val('confirmId'),
-    fecha:         fechaVal,
-    link:          val('confirmLink'),
-    observaciones: val('confirmObs')
-  }, 'Reunión confirmada internamente.');
+    id:           val('confirmId'),
+    fecha:        fechaVal,
+    link:         linkVal,
+    observaciones:val('confirmObs')
+  }, 'Reunión registrada. Cliente movido a Histórico.');
 
   closeModal();
 }
+
 
 /* =========================================================
    RESPUESTAS DEL FORM
@@ -2007,140 +2035,9 @@ function openUnmatchedModal() {
 
   openModal('🔔 Respuestas sin match', html,
     '<button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>' +
-    '<button class="btn" onclick="openRecentResponsesModal()">🕘 Últimas respuestas</button>' +
     '<button class="btn primary" onclick="closeModal()">Cerrar</button>',
     true
   );
-}
-
-
-async function openRecentResponsesModal() {
-  setLoading(true);
-
-  try {
-    const res = await callServer('getRecentFormResponses', { limit: 30 });
-    const list = (res && res.responses) || [];
-
-    const clients = [
-      ...(state.data.grouped.Bienvenida || []),
-      ...(state.data.grouped.Discovery || []),
-      ...(state.data.grouped.Calendario || [])
-    ];
-
-    const options = clients.map(c =>
-      '<option value="' + esc(cid(c)) + '">' +
-      esc(emp(c)) + ' · ' + esc(c.mails || c['Mails'] || '') +
-      '</option>'
-    ).join('');
-
-    let html = `
-      <div style="background:#F7F8FA;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
-        <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Últimas respuestas del formulario</div>
-        <div class="smallText">
-          Se muestran las 30 respuestas más recientes directamente desde el Sheet del Form,
-          aunque ya hayan sido matcheadas, ignoradas o todavía no hayan pasado por “Respuestas sin match”.
-        </div>
-      </div>`;
-
-    if (!list.length) {
-      html += '<div class="empty">No hay respuestas recientes en el formulario.</div>';
-    } else {
-      list.forEach(r => {
-        const status = String(r.estado || 'Nueva');
-        const matched = status.toLowerCase() === 'matcheada';
-        const ignored = status.toLowerCase() === 'ignorada';
-        const pending = status.toLowerCase() === 'pendiente';
-
-        let pillClass = 'blue';
-        if (matched) pillClass = 'green';
-        else if (ignored) pillClass = 'gray';
-        else if (pending) pillClass = 'yellow';
-
-        html += `
-          <div class="panelCard" style="margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
-              <div style="min-width:0;flex:1">
-                <h3 style="margin:0 0 5px">${esc(r.empresa || 'Sin empresa detectada')}</h3>
-                <div class="smallText">${esc(r.mails || 'Sin mail detectado')}</div>
-                <div class="tags" style="margin-top:7px">
-                  <span class="pill ${pillClass}">${esc(status)}</span>
-                  <span class="pill gray">Fila ${esc(r.fila || '')}</span>
-                  ${r.fecha ? `<span class="pill gray">${esc(r.fecha)}</span>` : ''}
-                </div>
-              </div>
-            </div>
-
-            ${matched
-              ? `<div style="margin-top:10px;padding:10px 12px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;font-size:12px;color:#166534">
-                   Vinculada a <strong>${esc(r.linkedClientName || 'cliente')}</strong>
-                   ${r.linkedSource ? ' · ' + esc(r.linkedSource) : ''}
-                 </div>`
-              : `
-                <div class="divider"></div>
-                <label>Matchear con cliente existente</label>
-                <select id="recent-match-${esc(r.responseId)}" style="margin-bottom:8px">
-                  <option value="">Seleccionar cliente...</option>
-                  ${options}
-                </select>`
-            }
-
-            <div class="actions">
-              <button class="btn small" onclick="openResponseModal({responseId:'${esc(r.responseId)}'})">
-                Ver respuesta
-              </button>
-
-              ${!matched
-                ? `<button class="btn small primary" onclick="matchRecentResponse('${esc(r.responseId)}')">
-                     Matchear
-                   </button>`
-                : ''}
-            </div>
-          </div>`;
-      });
-    }
-
-    openModal(
-      '🕘 Últimas respuestas del Form',
-      html,
-      `<button class="btn" onclick="openUnmatchedModal()">← Volver a pendientes</button>
-       <button class="btn primary" onclick="closeModal()">Cerrar</button>`,
-      true
-    );
-
-  } catch (e) {
-    toast('Error al cargar respuestas recientes: ' + errMsg(e), true);
-  } finally {
-    setLoading(false);
-  }
-}
-
-
-async function matchRecentResponse(responseId) {
-  const clientId = val('recent-match-' + responseId);
-
-  if (!clientId) {
-    toast('Seleccioná un cliente.', true);
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const res = await callServer('matchFormResponse', {
-      responseId,
-      clientId
-    });
-
-    toast((res && res.message) || 'Respuesta matcheada.');
-
-    await loadPipelineData();
-    await openRecentResponsesModal();
-
-  } catch (e) {
-    toast('Error: ' + errMsg(e), true);
-  } finally {
-    setLoading(false);
-  }
 }
 
 function toggleSelectAll(checked) {
