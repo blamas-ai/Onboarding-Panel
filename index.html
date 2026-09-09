@@ -1013,9 +1013,8 @@ function renderClientCard(c) {
   const etapa  = getEtapa(c);
   const form   = (c.respondioForm || c['Respondió Form'] || 'NO');
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
-  const mailDiscovery = (c.mailDiscovery || c['Mail Discovery Enviado'] || '');
-  const fechaDiscovery = (c.fechaDiscovery || c['Fecha Discovery'] || '');
   const mailCalendario = (c.mailCalendario || c['Mail Calendario Enviado'] || '');
+  const asistioDiscovery = String(c.asistioDiscovery || c['Asistió Discovery'] || 'PENDIENTE').toUpperCase();
   const omVal  = (c.om || c['OM'] || '');
   const amVal  = (c.am || c['AM'] || '');
   const days   = c.daysInStage || 0;
@@ -1038,11 +1037,15 @@ function renderClientCard(c) {
       <div class="tags">
         ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
         ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
-        ${etapa === 'Discovery' && mailDiscovery === '✅'
-          ? `<span class="pill green">Discovery${fechaDiscovery ? ' · ' + esc(fechaDiscovery) : ''}</span>`
-          : ''}
         ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
         ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
+        ${etapa === 'Discovery'
+          ? (asistioDiscovery === 'SI'
+              ? '<span class="pill green">Asistió Discovery ✓</span>'
+              : asistioDiscovery === 'NO'
+                ? '<span class="pill red">No asistió Discovery</span>'
+                : '<span class="pill yellow">Asistencia pendiente</span>')
+          : ''}
         ${etapa === 'Calendario' ? (mailCalendario === '✅' ? '<span class="pill green">Agenda enviada ✓</span>' : '<span class="pill yellow">Agenda pendiente</span>') : ''}
         ${etapa === 'Calendario' && estado ? `<span class="pill ${/agendad|confirmad/i.test(estado) ? 'green' : 'yellow'}">${esc(estado)}</span>` : ''}
         <span class="pill ${days >= 7 ? 'red' : 'gray'}">${days}d</span>
@@ -1052,6 +1055,7 @@ function renderClientCard(c) {
         <button class="btn small" onclick="openProfile('${esc(cId)}')">Ver perfil</button>
         ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Ver Form</button>` : ''}
         ${etapa === 'Discovery' ? `<button class="btn small" onclick="copyClientEmails('${esc(cId)}')">Copiar mails</button>` : ''}
+        ${etapa === 'Discovery' ? `<button class="btn small" onclick="openDiscoveryAttendance('${esc(cId)}')">Asistencia</button>` : ''}
       </div>
       <div class="stageActions">${stageButtons(c)}</div>
     </div>`;
@@ -1083,6 +1087,56 @@ function stageButtons(c) {
       <button class="btn small stageMove" onclick="openConfirmMeeting('${esc(cId)}')">Registrar reunión</button>`;
   }
   return '';
+}
+
+
+function openDiscoveryAttendance(cId) {
+  const client = [
+    ...(state.data.grouped.Discovery || [])
+  ].find(c => String(cid(c)) === String(cId));
+
+  const current = String(
+    client?.asistioDiscovery ||
+    client?.['Asistió Discovery'] ||
+    'PENDIENTE'
+  ).toUpperCase();
+
+  openModal('Asistencia al Discovery', `
+    <input type="hidden" id="attendanceClientId" value="${esc(cId)}">
+
+    <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.55;color:#344054;">
+      Marcá si el cliente participó de la sesión de Discovery. Esta información es interna y no envía ningún mail.
+    </div>
+
+    <label>Asistencia</label>
+    <select id="attendanceValue">
+      <option value="PENDIENTE" ${current==='PENDIENTE'?'selected':''}>Pendiente</option>
+      <option value="SI" ${current==='SI'?'selected':''}>Sí, asistió</option>
+      <option value="NO" ${current==='NO'?'selected':''}>No asistió</option>
+    </select>
+  `,
+  `<button class="btn" onclick="closeModal()">Cancelar</button>
+   <button class="btn primary" onclick="saveDiscoveryAttendance()">Guardar asistencia</button>`);
+}
+
+async function saveDiscoveryAttendance() {
+  const cId = val('attendanceClientId');
+  const attendance = val('attendanceValue');
+
+  await runAction(
+    'updateClient',
+    {
+      id: cId,
+      'Asistió Discovery': attendance
+    },
+    attendance === 'SI'
+      ? 'Asistencia registrada.'
+      : attendance === 'NO'
+        ? 'Inasistencia registrada.'
+        : 'Asistencia marcada como pendiente.'
+  );
+
+  closeModal();
 }
 
 /* =========================================================
@@ -1727,6 +1781,14 @@ function profileHtml(c, audit, fup, form) {
             <label>Link Meet Discovery</label>
             <input id="editLinkDiscovery" value="${esc(c.linkDiscovery||c['Link Discovery']||'')}">
           </div>
+          <div class="full">
+            <label>Asistencia al Discovery</label>
+            <select id="editAsistioDiscovery">
+              <option value="PENDIENTE" ${String(c.asistioDiscovery||c['Asistió Discovery']||'PENDIENTE').toUpperCase()==='PENDIENTE'?'selected':''}>Pendiente</option>
+              <option value="SI" ${String(c.asistioDiscovery||c['Asistió Discovery']||'').toUpperCase()==='SI'?'selected':''}>Sí, asistió</option>
+              <option value="NO" ${String(c.asistioDiscovery||c['Asistió Discovery']||'').toUpperCase()==='NO'?'selected':''}>No asistió</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -1915,6 +1977,7 @@ async function saveEdit() {
     Estado: val('editEstado'), OM: val('editOm'), AM: val('editAm'),
     'Fecha Discovery': val('editFechaDiscovery'),
     'Link Discovery': val('editLinkDiscovery'),
+    'Asistió Discovery': val('editAsistioDiscovery'),
     'Fecha Reunión': val('editFechaReunion'),
     'Link Reunión': val('editLinkReunion'),
     Observaciones: val('editObs'),
