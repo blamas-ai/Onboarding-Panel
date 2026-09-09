@@ -1039,7 +1039,7 @@ function renderClientCard(c) {
         ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
         ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
         ${etapa === 'Discovery' && mailDiscovery === '✅'
-          ? `<span class="pill green">Discovery enviado${fechaDiscovery ? ' · ' + esc(fechaDiscovery) : ''}</span>`
+          ? `<span class="pill green">Discovery${fechaDiscovery ? ' · ' + esc(fechaDiscovery) : ''}</span>`
           : ''}
         ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
         ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
