@@ -1013,6 +1013,8 @@ function renderClientCard(c) {
   const etapa  = getEtapa(c);
   const form   = (c.respondioForm || c['Respondió Form'] || 'NO');
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
+  const mailDiscovery = (c.mailDiscovery || c['Mail Discovery Enviado'] || '');
+  const fechaDiscovery = (c.fechaDiscovery || c['Fecha Discovery'] || '');
   const mailCalendario = (c.mailCalendario || c['Mail Calendario Enviado'] || '');
   const omVal  = (c.om || c['OM'] || '');
   const amVal  = (c.am || c['AM'] || '');
@@ -1036,6 +1038,9 @@ function renderClientCard(c) {
       <div class="tags">
         ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
         ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
+        ${etapa === 'Discovery' && mailDiscovery === '✅'
+          ? `<span class="pill green">Discovery enviado${fechaDiscovery ? ' · ' + esc(fechaDiscovery) : ''}</span>`
+          : ''}
         ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
         ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
         ${etapa === 'Calendario' ? (mailCalendario === '✅' ? '<span class="pill green">Agenda enviada ✓</span>' : '<span class="pill yellow">Agenda pendiente</span>') : ''}
