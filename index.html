@@ -1933,17 +1933,145 @@ async function openProfile(cId) {
   setLoading(true);
   try {
     const res = await callServer('getClientProfile', { id: cId });
-    const c   = res.client || {};
+    const c     = res.client || {};
     const audit = res.audit || [];
     const fup   = res.fupSummary || {};
     const form  = res.formResponse || [];
+    const isHistory = res.isHistory === true || c.isHistory === true || getEtapa(c) === 'Histórico';
 
-    openModal('Perfil · ' + esc(emp(c)), profileHtml(c, audit, fup, form), profileFooter(c), true);
+    if (isHistory) {
+      openModal(
+        'Perfil histórico · ' + esc(emp(c)),
+        historyProfileHtml(c, audit, fup, form),
+        historyProfileFooter(c),
+        true
+      );
+    } else {
+      openModal(
+        'Perfil · ' + esc(emp(c)),
+        profileHtml(c, audit, fup, form),
+        profileFooter(c),
+        true
+      );
+    }
   } catch (e) {
     toast('Error al cargar perfil: ' + errMsg(e), true);
   } finally {
     setLoading(false);
   }
+}
+
+
+function historyValue(value, fallback='-') {
+  const v = value === null || value === undefined ? '' : String(value).trim();
+  return v ? esc(v) : fallback;
+}
+
+function historyProfileHtml(c, audit, fup, form) {
+  const attendance = String(c.asistioDiscovery || 'PENDIENTE').toUpperCase();
+  const attendanceHtml =
+    attendance === 'SI'
+      ? '<span class="pill green">Sí, asistió</span>'
+      : attendance === 'NO'
+        ? '<span class="pill red">No asistió</span>'
+        : '<span class="pill yellow">Pendiente</span>';
+
+  const calendarHtml =
+    String(c.mailCalendario || '').trim() === '✅'
+      ? '<span class="pill green">Enviado ✓</span>'
+      : '<span class="pill yellow">Pendiente</span>';
+
+  const formHtml =
+    String(c.respondioForm || '').toUpperCase() === 'SI'
+      ? '<span class="pill green">Respondido ✓</span>'
+      : '<span class="pill yellow">Sin respuesta</span>';
+
+  return `
+    <div class="profileStack">
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Datos del cliente</p>
+        <div class="responseGrid">
+          <div class="responseItem"><span>Empresa</span><b>${historyValue(emp(c))}</b></div>
+          <div class="responseItem"><span>Revenue</span><b>${historyValue(c.revenue)}</b></div>
+          <div class="responseItem"><span>Fecha de ingreso</span><b>${historyValue(c.fechaIngreso)}</b></div>
+          <div class="responseItem"><span>Reimplementado</span><b>${String(c.reimplementado||'NO').toUpperCase()==='SI'?'Sí':'No'}</b></div>
+          <div class="responseItem" style="grid-column:1/-1"><span>Mails</span><b style="overflow-wrap:anywhere">${historyValue(c.mails)}</b></div>
+        </div>
+      </section>
+
+      <section class="profileSection white">
+        <p class="sectionTitle">Discovery</p>
+        <div class="responseGrid">
+          <div class="responseItem"><span>Fecha Discovery</span><b>${c.fechaDiscovery ? esc(fmtDate(c.fechaDiscovery)) : '-'}</b></div>
+          <div class="responseItem"><span>Asistencia</span><b>${attendanceHtml}</b></div>
+          <div class="responseItem"><span>Mail Discovery</span><b>${String(c.mailDiscovery||'').trim()==='✅'?'Enviado ✓':'-'}</b></div>
+          <div class="responseItem"><span>Formulario</span><b>${formHtml}</b></div>
+          <div class="responseItem" style="grid-column:1/-1"><span>Link Discovery</span><b style="overflow-wrap:anywhere">${historyValue(c.linkDiscovery)}</b></div>
+        </div>
+      </section>
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Asignación</p>
+        <div class="responseGrid">
+          <div class="responseItem"><span>OM</span><b>${historyValue(c.om)}</b></div>
+          <div class="responseItem"><span>AM</span><b style="overflow-wrap:anywhere">${historyValue(c.am)}</b></div>
+        </div>
+      </section>
+
+      <section class="profileSection white">
+        <p class="sectionTitle">Reunión de implementación</p>
+        <div class="responseGrid">
+          <div class="responseItem"><span>Envío de calendario</span><b>${calendarHtml}</b></div>
+          <div class="responseItem"><span>Fecha reunión K.O.</span><b>${c.fechaReunion ? esc(fmtDate(c.fechaReunion)) : '-'}</b></div>
+          <div class="responseItem" style="grid-column:1/-1"><span>Link reunión</span><b style="overflow-wrap:anywhere">${historyValue(c.linkReunion)}</b></div>
+        </div>
+      </section>
+
+      <section class="profileSection soft">
+        <p class="sectionTitle">Notas</p>
+        <div class="responseGrid">
+          <div class="responseItem" style="grid-column:1/-1"><span>Observaciones</span><b>${historyValue(c.observaciones)}</b></div>
+          <div class="responseItem" style="grid-column:1/-1"><span>Comentarios internos</span><b>${historyValue(c.comentarios)}</b></div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="divider"></div>
+    <p class="sectionTitle">Seguimiento de FUPs</p>
+    <div class="fupGrid">
+      <div class="fupBox bg-blue"><div class="fupNum">${fup.bienvenida||0}</div><div class="fupLabel">Bienvenida</div></div>
+      <div class="fupBox bg-yellow"><div class="fupNum">${fup.discovery||0}</div><div class="fupLabel">Discovery</div></div>
+      <div class="fupBox bg-green"><div class="fupNum">${fup.calendario||0}</div><div class="fupLabel">Calendario</div></div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="sectionTitle">Auditoría</p>
+    <div class="timeline">
+      ${audit.length
+        ? audit.map(e => `<div class="event">
+            <strong>${esc(e.accion||'')} <span style="font-weight:400;color:var(--muted)">${fmtDate(e.fecha)}</span></strong>
+            <p>${esc(e.etapa||'')}${e.detalle ? ' · ' + esc(e.detalle) : ''}</p>
+            ${e.usuario ? `<p style="color:var(--muted)">${esc(e.usuario)}</p>` : ''}
+          </div>`).join('')
+        : '<div class="empty">Sin eventos registrados.</div>'}
+    </div>
+
+    ${form.length ? `
+      <div class="divider"></div>
+      <p class="sectionTitle">Respuesta del formulario</p>
+      <div class="responseGrid">${renderPairs(form)}</div>` : ''}
+  `;
+}
+
+function historyProfileFooter(c) {
+  return `
+    <span style="margin-right:auto;font-size:12px;color:var(--muted)">
+      Perfil histórico · solo lectura
+    </span>
+    <button class="btn primary" onclick="closeModal()">Cerrar</button>
+  `;
 }
 
 function profileHtml(c, audit, fup, form) {
