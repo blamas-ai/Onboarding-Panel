@@ -111,7 +111,7 @@
     .filters {
       background:#fff; border:1px solid var(--border); border-radius:18px;
       padding:14px 16px; display:grid;
-      grid-template-columns:.82fr .82fr .82fr .82fr 1fr 1fr 1fr 1.35fr; gap:10px;
+      grid-template-columns:.9fr .9fr 1fr 1fr 1fr 1fr 1.35fr; gap:10px;
       margin-bottom:14px; box-shadow:0 4px 14px rgba(17,24,39,.04);
     }
     label { display:block; font-size:11px; font-weight:900; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
@@ -439,8 +439,7 @@
   <div class="filters">
     <div><label>Ingreso desde</label><input type="date" id="filterFrom" onchange="applyLocalFilters()"></div>
     <div><label>Ingreso hasta</label><input type="date" id="filterTo" onchange="applyLocalFilters()"></div>
-    <div><label>Discovery desde</label><input type="date" id="filterDiscoveryFrom" onchange="applyLocalFilters()"></div>
-    <div><label>Discovery hasta</label><input type="date" id="filterDiscoveryTo" onchange="applyLocalFilters()"></div>
+    <div><label>Fecha Discovery</label><input type="date" id="filterDiscoveryDate" onchange="applyLocalFilters()"></div>
     <div>
       <label>OM</label>
       <select id="filterOm" onchange="applyLocalFilters()">
@@ -505,13 +504,19 @@ let state = {
   loaded: { pipeline:false, calendar:false, history:false }
 };
 
-const PIPELINE_SNAPSHOT_KEY = 'lebane_onboarding_pipeline_v13';
-const PIPELINE_SNAPSHOT_MAX_AGE = 15 * 60 * 1000;
+const PIPELINE_SNAPSHOT_KEY = 'lebane_onboarding_pipeline_v19';
+const PIPELINE_SNAPSHOT_MAX_AGE = 30 * 60 * 1000;
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Muestra inmediatamente la última foto del pipeline y actualiza en segundo plano.
+  // El panel se dibuja inmediatamente, incluso si Apps Script está en cold start.
   const restored = restorePipelineSnapshot();
-  loadPipelineData({ silent: restored });
+
+  if (!restored) {
+    renderInitialPipelineSkeleton();
+  }
+
+  // Actualización en segundo plano: nunca ocultamos toda la pantalla al iniciar.
+  loadPipelineData({ silent: true, initial: true });
 });
 
 function restorePipelineSnapshot() {
@@ -528,7 +533,6 @@ function restorePipelineSnapshot() {
     state.data.unmatched = snap.data.unmatched || [];
     state.data.elevated = snap.data.elevated || [];
     state.loaded.pipeline = true;
-    savePipelineSnapshot();
     render();
     return true;
   } catch (e) {
@@ -584,34 +588,126 @@ function emptyData() {
   };
 }
 
+
+function renderInitialPipelineSkeleton() {
+  const main = id('main');
+  if (!main) return;
+
+  main.innerHTML = `
+    <div class="stageCards">
+      ${[
+        ['Bienvenida','bg-blue'],
+        ['Discovery','bg-yellow'],
+        ['Calendario','bg-green'],
+        ['Histórico','bg-gray']
+      ].map(([name, cls]) => `
+        <div class="stageCard ${cls}">
+          <h3>${name}</h3>
+          <div class="num">—</div>
+          <div style="font-size:11px;color:var(--muted)">Cargando datos…</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="pipeline">
+      ${['Bienvenida','Discovery','Calendario'].map(stage => `
+        <section class="column">
+          <div class="columnHead">
+            <h3>${stage}</h3>
+            <span class="count">…</span>
+          </div>
+          <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">
+            Actualizando…
+          </div>
+        </section>
+      `).join('')}
+    </div>
+  `;
+}
+
+function showPanelConnectionWarning(message) {
+  const strip = id('alertStrip');
+  if (!strip) return;
+
+  strip.innerHTML = `
+    <div class="alertBanner" style="border-color:#F59E0B;background:#FFFBEB;color:#92400E">
+      <strong>No pudimos actualizar los datos.</strong>
+      <span>${esc(message || 'Se mantiene la última información disponible.')}</span>
+      <button class="btn small" onclick="loadPipelineData({silent:true,initial:true})">Reintentar</button>
+    </div>
+  `;
+  strip.classList.add('show');
+}
+
 /* =========================================================
    SERVER
 ========================================================= */
-async function callServer(action, payload) {
-  const response = await fetch('/api/onboarding', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: action,
-      payload: payload || {}
-    })
-  });
+async function callServer(action, payload, options) {
+  options = options || {};
 
-  let data;
-  try {
-    data = await response.json();
-  } catch (e) {
-    throw new Error('El servidor no devolvió una respuesta válida.');
+  const timeoutMs = Number(options.timeoutMs || 45000);
+  const attempts = options.noRetry ? 1 : 2;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: action,
+          payload: payload || {}
+        }),
+        signal: controller.signal
+      });
+
+      const raw = await response.text();
+      let data = {};
+
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch (jsonError) {
+        throw new Error(
+          raw && raw.trim().startsWith('<')
+            ? 'Apps Script devolvió HTML en lugar de JSON. Revisá que Vercel apunte a la URL /exec vigente.'
+            : 'El servidor no devolvió una respuesta JSON válida.'
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error((data && data.message) || ('Error HTTP ' + response.status));
+      }
+
+      if (data && data.error) {
+        throw new Error(data.message || 'Error del servidor.');
+      }
+
+      return data;
+
+    } catch (error) {
+      lastError = error;
+
+      const msg = String(error && error.message || '');
+      const functional =
+        /Falta |No se encontró|Completá|Acción no reconocida|Ya existe|no tiene/i.test(msg);
+
+      if (functional || attempt === attempts) break;
+
+      await new Promise(resolve => setTimeout(resolve, 700 * attempt));
+
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  if (!response.ok) {
-    throw new Error((data && data.message) || ('Error HTTP ' + response.status));
-  }
-  if (data && data.error) {
-    throw new Error(data.message || 'Error del servidor.');
+  if (lastError && lastError.name === 'AbortError') {
+    throw new Error('La carga está tardando demasiado. Reintentá en unos segundos.');
   }
 
-  return data;
+  throw lastError || new Error('No se pudo comunicar con el servidor.');
 }
 
 /* =========================================================
@@ -620,7 +716,7 @@ async function callServer(action, payload) {
 function getFilters() {
   return {
     from: val('filterFrom'), to: val('filterTo'),
-    discoveryFrom: val('filterDiscoveryFrom'), discoveryTo: val('filterDiscoveryTo'),
+    discoveryDate: val('filterDiscoveryDate'),
     om: val('filterOm'), am: val('filterAm'),
     reimplementado: val('filterReimplementado'),
     search: val('filterSearch')
@@ -668,7 +764,10 @@ function exportCSV() {
         c.reimplementado || 'NO',
         c.om || '',
         c.am || '',
-        fmtDate(c.fecha || ''),
+        (() => {
+          const d = getCalendarEventDate(c);
+          return d ? fmtDate(d) : '';
+        })(),
         c.linkReunion || '',
         c.estado || ''
       ]);
@@ -805,8 +904,10 @@ async function installTrigger() {
 async function loadPipelineData(options) {
   options = options || {};
   if (!options.silent) setLoading(true);
+
   try {
-    const res = await callServer('getPipelineData', {});
+    const res = await callServer('getPipelineData', {}, { timeoutMs: 45000 });
+
     if (!res || res.error || !res.ok) {
       throw new Error((res && res.message) || 'No se pudo cargar el Pipeline.');
     }
@@ -815,17 +916,36 @@ async function loadPipelineData(options) {
       { bienvenida:0, discovery:0, calendario:0, historico:0, unmatched:0 },
       res.counts || {}
     );
+
     state.data.grouped = Object.assign(
       { Bienvenida:[], Discovery:[], Calendario:[] },
       res.grouped || {}
     );
+
     state.data.unmatched = res.unmatched || [];
-    state.data.elevated = res.elevated || [];
+
+    // Reconstruimos alertas localmente para no depender de payload duplicado.
+    state.data.elevated = []
+      .concat(state.data.grouped.Bienvenida || [])
+      .concat(state.data.grouped.Discovery || [])
+      .concat(state.data.grouped.Calendario || [])
+      .filter(c => Number(c.daysInStage || 0) >= 7);
+
     state.loaded.pipeline = true;
+    savePipelineSnapshot();
     render();
+
   } catch (e) {
-    toast('Error al cargar Pipeline: ' + errMsg(e), true);
     console.error(e);
+
+    if (state.loaded.pipeline) {
+      showPanelConnectionWarning(errMsg(e));
+      toast('No se pudo actualizar. Se mantiene la última información.', true);
+    } else {
+      renderInitialPipelineSkeleton();
+      showPanelConnectionWarning(errMsg(e));
+    }
+
   } finally {
     if (!options.silent) setLoading(false);
   }
@@ -983,23 +1103,17 @@ function parseFilterDateValue(value) {
 
 function discoveryDatePasses(value) {
   const f = getFilters();
-  if (!f.discoveryFrom && !f.discoveryTo) return true;
+  if (!f.discoveryDate) return true;
   if (!value) return false;
 
   const d = parseFilterDateValue(value);
   if (!d) return false;
 
-  if (f.discoveryFrom) {
-    const from = new Date(f.discoveryFrom + 'T00:00:00');
-    if (d < from) return false;
-  }
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
 
-  if (f.discoveryTo) {
-    const to = new Date(f.discoveryTo + 'T23:59:59');
-    if (d > to) return false;
-  }
-
-  return true;
+  return `${yyyy}-${mm}-${dd}` === f.discoveryDate;
 }
 
 function filteredStage(stage) {
@@ -1012,9 +1126,10 @@ function filteredStage(stage) {
 
 function filteredCalendar() {
   return (state.data.calendar || []).filter(function(c) {
+    // Ingreso desde/hasta = Fecha Ingreso.
+    // La fecha del evento se usa exclusivamente para ubicarlo en el calendario.
     return matchesCommonFilters(c)
-      && datePasses(c.fecha || c['Fecha'])
-      && discoveryDatePasses(c.fechaDiscovery || c['Fecha Discovery']);
+      && datePasses(c.fechaIngreso || c['Fecha Ingreso']);
   });
 }
 
@@ -1110,7 +1225,7 @@ function renderPipeline() {
     <div class="stageCards">
       ${stageCard('Bienvenida', bienvenida.length, 'Etapa inicial', 'bg-blue')}
       ${stageCard('Discovery',  discovery.length,  'Respondieron el Form', 'bg-yellow')}
-      ${stageCard('Calendario', calendario.length, 'Con sesión agendada', 'bg-green')}
+      ${stageCard('Calendario', calendario.length, 'Pendientes de coordinación', 'bg-green')}
       ${stageCard('Histórico',  state.data.counts.historico, 'Completados', 'bg-gray')}
     </div>
     <div class="pipeline">
@@ -1162,58 +1277,105 @@ function colPageChange(stage, delta) {
 function renderClientCard(c) {
   const cId    = cid(c);
   const etapa  = getEtapa(c);
-  const form   = (c.respondioForm || c['Respondió Form'] || 'NO');
   const bienvenida = (c.mailBienvenida || c['Mail Bienvenida Enviado'] || '');
+  const mailDiscovery = (c.mailDiscovery || c['Mail Discovery Enviado'] || '');
   const mailCalendario = (c.mailCalendario || c['Mail Calendario Enviado'] || '');
-  const asistioDiscovery = String(c.asistioDiscovery || c['Asistió Discovery'] || 'PENDIENTE').toUpperCase();
+  const asistioDiscovery = String(
+    c.asistioDiscovery || c['Asistió Discovery'] || 'PENDIENTE'
+  ).toUpperCase();
+
   const omVal  = (c.om || c['OM'] || '');
   const amVal  = (c.am || c['AM'] || '');
   const days   = c.daysInStage || 0;
-  const estado = c.estado || c['Estado'] || '';
   const isNewStage = !!c.isNewStage;
-  const reimplementado = String(c.reimplementado || c['Reimplementado'] || 'NO').toUpperCase();
+  const reimplementado = String(
+    c.reimplementado || c['Reimplementado'] || 'NO'
+  ).toUpperCase();
   const fechaIngreso = c.fechaIngreso || c['Fecha Ingreso'] || '';
+
+  let statusChip = '';
+
+  if (etapa === 'Bienvenida') {
+    statusChip = bienvenida === '✅'
+      ? '<span class="pill green">Bienvenida enviada</span>'
+      : '<span class="pill yellow">Falta envío bienvenida</span>';
+  }
+
+  if (etapa === 'Discovery') {
+    if (asistioDiscovery === 'SI') {
+      statusChip = '<span class="pill green">Asistió Discovery</span>';
+    } else if (asistioDiscovery === 'NO') {
+      statusChip = '<span class="pill red">No asistió Discovery</span>';
+    } else if (mailDiscovery === '✅') {
+      statusChip = '<span class="pill green">Discovery enviado</span>';
+    } else {
+      statusChip = '<span class="pill yellow">Falta envío Discovery</span>';
+    }
+  }
+
+  if (etapa === 'Calendario') {
+    statusChip = mailCalendario === '✅'
+      ? '<span class="pill yellow">Pendiente de agendar reunión</span>'
+      : '<span class="pill yellow">Pendiente envío de agenda</span>';
+  }
+
+  const discoveryTools = etapa === 'Discovery'
+    ? `
+      <div class="cardLinks">
+        <button class="btn small" onclick="copyClientEmails('${esc(cId)}')">Copiar mails</button>
+        <button class="btn small" onclick="openDiscoveryAttendance('${esc(cId)}')">Asistencia</button>
+      </div>`
+    : '';
 
   return `
     <div class="clientCard${c.elevated ? ' elevated' : ''}${isNewStage ? ' newStage' : ''}" data-stage="${esc(etapa)}">
       ${isNewStage ? '<span class="newRibbon">NEW</span>' : ''}
+
       <div class="cardHeader">
         <div style="min-width:0;flex:1">
           <h3 class="clientTitle">${esc(emp(c))}</h3>
           <div class="meta">${esc(c.mails || c['Mails'] || '')}</div>
           <div class="meta">Revenue: ${esc(c.revenue || c['Revenue'] || '-')}</div>
-          ${fechaIngreso ? `<div class="meta">Ingreso: ${esc(formatDateOnlyUi(fechaIngreso))}</div>` : ''}
+          ${fechaIngreso
+            ? `<div class="meta">Ingreso: ${esc(formatDateOnlyUi(fechaIngreso))}</div>`
+            : ''}
         </div>
+
         <div class="cardTools">
-          <button class="toolBtn" onclick="sendReminder('${esc(cId)}','${esc(etapa)}')" title="Enviar seguimiento">FUP</button>
-          <button class="toolBtn" onclick="openProfile('${esc(cId)}')" title="Editar cliente">Editar</button>
+          <button
+            class="toolBtn"
+            onclick="sendReminder('${esc(cId)}','${esc(etapa)}')"
+            title="Enviar seguimiento"
+          >FUP</button>
+
+          <button
+            class="toolBtn"
+            onclick="openProfile('${esc(cId)}')"
+            title="Ver perfil"
+          >Ver perfil</button>
         </div>
       </div>
 
       <div class="tags">
-        ${reimplementado === 'SI' ? '<span class="pill blue">Reimplementado</span>' : ''}
-        ${form === 'SI' ? '<span class="pill green">Form ✓</span>' : '<span class="pill red">Form ✗</span>'}
-        ${bienvenida === '✅' ? '<span class="pill green">Bienvenida ✓</span>' : '<span class="pill gray">Sin bienvenida</span>'}
-        ${omVal ? `<span class="pill blue">OM ${esc(omVal)}</span>` : ''}
-        ${amVal ? `<span class="pill blue">AM ${esc(amVal)}</span>` : ''}
-        ${etapa === 'Discovery'
-          ? (asistioDiscovery === 'SI'
-              ? '<span class="pill green">Asistió Discovery ✓</span>'
-              : asistioDiscovery === 'NO'
-                ? '<span class="pill red">No asistió Discovery</span>'
-                : '<span class="pill yellow">Asistencia pendiente</span>')
+        ${reimplementado === 'SI'
+          ? '<span class="pill blue">Reimplementado</span>'
           : ''}
-        ${etapa === 'Calendario' ? (mailCalendario === '✅' ? '<span class="pill green">Agenda enviada ✓</span>' : '<span class="pill yellow">Agenda pendiente</span>') : ''}
-        ${etapa === 'Calendario' && estado ? `<span class="pill ${/agendad|confirmad/i.test(estado) ? 'green' : 'yellow'}">${esc(estado)}</span>` : ''}
+
+        ${omVal
+          ? `<span class="pill blue">OM ${esc(omVal)}</span>`
+          : ''}
+
+        ${amVal
+          ? `<span class="pill blue">AM ${esc(amVal)}</span>`
+          : ''}
+
+        ${statusChip}
+
         <span class="pill ${days >= 7 ? 'red' : 'gray'}">${days}d</span>
       </div>
 
-      <div class="cardLinks">
-        <button class="btn small" onclick="openProfile('${esc(cId)}')">Ver perfil</button>
-        ${(c.idRespuestaForm || c['ID Respuesta Form']) ? `<button class="btn small" onclick="openResponseModal({clientId:'${esc(cId)}'})">Ver Form</button>` : ''}
-        ${etapa === 'Discovery' ? `<button class="btn small" onclick="copyClientEmails('${esc(cId)}')">Copiar mails</button>` : ''}
-        ${etapa === 'Discovery' ? `<button class="btn small" onclick="openDiscoveryAttendance('${esc(cId)}')">Asistencia</button>` : ''}
-      </div>
+      ${discoveryTools}
+
       <div class="stageActions">${stageButtons(c)}</div>
     </div>`;
 }
@@ -1355,17 +1517,42 @@ function getWeekStart(d) {
   return dt;
 }
 
+
+function getCalendarEventDate(c) {
+  if (!c) return null;
+
+  if (c.fechaMs !== undefined && c.fechaMs !== null && c.fechaMs !== '') {
+    const ms = Number(c.fechaMs);
+    if (Number.isFinite(ms)) {
+      const d = new Date(ms);
+      if (!isNaN(d)) return d;
+    }
+  }
+
+  if (c.fechaIsoLocal) {
+    const d = new Date(String(c.fechaIsoLocal));
+    if (!isNaN(d)) return d;
+  }
+
+  // Compatibilidad con filas antiguas. Nunca usa Fecha Discovery.
+  return parseFilterDateValue(c.fecha || c['Fecha'] || '');
+}
+
 function renderCalBody() {
   const list = filteredCalendar();
 
   // Index eventos por fecha string YYYY-MM-DD
   const byDate = {};
   list.forEach(c => {
-    const raw = c.fecha || c['Fecha'] || '';
-    if (!raw) return;
-    const d = new Date(raw);
-    if (isNaN(d)) return;
-    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    // Fecha del evento = Calendario!Fecha, proveniente de "Registrar reunión".
+    const d = getCalendarEventDate(c);
+    if (!d || isNaN(d)) return;
+
+    const key =
+      d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+
     if (!byDate[key]) byDate[key] = [];
     byDate[key].push(c);
   });
@@ -1525,7 +1712,10 @@ function renderHistory() {
               ? '<span class="pill blue" style="margin-top:7px">Reimplementado</span>'
               : ''}
           </div>
-          <button class="btn small" onclick="openProfile('${esc(cid(c))}')">Ver perfil</button>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn small" onclick="openProfile('${esc(cid(c))}')">Ver perfil</button>
+            <button class="btn small" onclick="openResponseModal({clientId:'${esc(cid(c))}'})">Ver Form</button>
+          </div>
         </div>
 
         <div style="overflow-x:auto">
