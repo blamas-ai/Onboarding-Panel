@@ -445,9 +445,9 @@
       <label>OM</label>
       <select id="filterOm" onchange="applyLocalFilters()">
         <option value="">Todos los OM</option>
-        <option>Agus</option>
-        <option>Gaba</option>
-        <option>Juli</option>
+        <option>Agustin</option>
+        <option>Gabriela H</option>
+        <option>Julieta</option>
         <option>Brisa</option>
       </select>
     </div>
@@ -496,7 +496,7 @@
 /* =========================================================
    ESTADO
 ========================================================= */
-const OM_LIST = ['Agus','Gaba','Juli','Brisa'];
+const OM_LIST = ['Agustin','Gabriela H','Julieta','Brisa'];
 const AM_LIST = ['pia.airaldi@lebane.app','g.murillo@lebane.app'];
 
 let state = {
@@ -657,7 +657,7 @@ function exportCSV() {
     });
     filename = 'pipeline.csv';
   } else if (view === 'calendar') {
-    const headers = ['Empresa','Mails','Fecha Ingreso','Reimplementado','OM','AM','Fecha Reunión','Link Reunión','Estado'];
+    const headers = ['Empresa','Mails','Fecha Ingreso','Fecha Discovery','Reimplementado','OM','AM','Fecha Reunión','Link Reunión','Estado'];
     rows.push(headers);
     filteredCalendar().forEach(c => {
       rows.push([
@@ -675,22 +675,36 @@ function exportCSV() {
     });
     filename = 'calendario.csv';
   } else if (view === 'history') {
-    const headers = ['Empresa','Mails','Revenue','Fecha Ingreso','Fecha Discovery','Reimplementado','OM','AM','Fecha Reunión','Fecha Completado','FUP Total'];
+    const headers = [
+      'Nombre de empresa',
+      'Revenue',
+      'Fecha de Discovery',
+      'Asistencia',
+      'OM',
+      'AM',
+      'Envío de calendario',
+      'Fecha reunión K.O.'
+    ];
+
     rows.push(headers);
+
     filteredHistory().forEach(c => {
       rows.push([
         emp(c),
-        c.mails || '',
         c.revenue || '',
-        c.fechaIngreso || '',
-        c.reimplementado || 'NO',
+        c.fechaDiscovery ? fmtDate(c.fechaDiscovery) : '',
+        String(c.asistioDiscovery || 'PENDIENTE').toUpperCase() === 'SI'
+          ? 'Sí, asistió'
+          : String(c.asistioDiscovery || '').toUpperCase() === 'NO'
+            ? 'No asistió'
+            : 'Pendiente',
         c.om || '',
         c.am || '',
-        fmtDate(c.fechaReunion || ''),
-        fmtDate(c.fechaCompleto || ''),
-        c.fupTotal || 0
+        String(c.mailCalendario || '').trim() === '✅' ? 'Enviado' : 'Pendiente',
+        c.fechaReunion ? fmtDate(c.fechaReunion) : ''
       ]);
     });
+
     filename = 'historico.csv';
   }
 
@@ -998,7 +1012,9 @@ function filteredStage(stage) {
 
 function filteredCalendar() {
   return (state.data.calendar || []).filter(function(c) {
-    return matchesCommonFilters(c) && datePasses(c.fecha || c['Fecha']);
+    return matchesCommonFilters(c)
+      && datePasses(c.fecha || c['Fecha'])
+      && discoveryDatePasses(c.fechaDiscovery || c['Fecha Discovery']);
   });
 }
 
@@ -1465,44 +1481,113 @@ function renderWeekView(byDate, DAYS_ES) {
 /* =========================================================
    HISTÓRICO
 ========================================================= */
+function historyAttendanceLabel(value) {
+  const v = String(value || 'PENDIENTE').toUpperCase();
+  if (v === 'SI') return '<span class="pill green">Sí, asistió</span>';
+  if (v === 'NO') return '<span class="pill red">No asistió</span>';
+  return '<span class="pill yellow">Pendiente</span>';
+}
+
+function historyCalendarSentLabel(value) {
+  const sent = String(value || '').trim() === '✅';
+  return sent
+    ? '<span class="pill green">Enviado ✓</span>'
+    : '<span class="pill yellow">Pendiente</span>';
+}
+
 function renderHistory() {
   const list = filteredHistory();
 
-  const tableRows = list.length ? list.map(c => `
-    <tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:10px 12px;font-weight:700">${esc(emp(c))}</td>
-      <td style="padding:10px 12px;color:var(--muted);font-size:12px">${esc(c.mails||'')}</td>
-      <td style="padding:10px 12px">${esc(c.om||'-')}</td>
-      <td style="padding:10px 12px">${esc(c.am||'-')}</td>
-      <td style="padding:10px 12px;font-size:12px">${fmtDate(c.fechaReunion||'')}</td>
-      <td style="padding:10px 12px;font-size:12px">${fmtDate(c.fechaCompleto||'')}</td>
-      <td style="padding:10px 12px"><span class="pill green">Completado</span></td>
-    </tr>`).join('')
-    : '<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">Sin clientes completados todavía.</td></tr>';
+  const cards = list.length
+    ? list.map(c => `
+      <article style="
+        background:#fff;
+        border:1px solid var(--border);
+        border-radius:16px;
+        overflow:hidden;
+        box-shadow:0 5px 16px rgba(17,24,39,.04);
+        margin-bottom:14px;
+      ">
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:15px 18px;
+          border-bottom:1px solid var(--border);
+          background:#fff;
+        ">
+          <div style="min-width:0">
+            <div style="font-size:16px;font-weight:900;color:var(--ink);line-height:1.25">
+              ${esc(emp(c))}
+            </div>
+            ${String(c.reimplementado||'').toUpperCase()==='SI'
+              ? '<span class="pill blue" style="margin-top:7px">Reimplementado</span>'
+              : ''}
+          </div>
+          <button class="btn small" onclick="openProfile('${esc(cid(c))}')">Ver perfil</button>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table style="
+            width:100%;
+            min-width:980px;
+            border-collapse:collapse;
+            table-layout:fixed;
+            font-family:Arial,sans-serif;
+          ">
+            <thead>
+              <tr style="background:#F8FAFC;border-bottom:1px solid var(--border)">
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Revenue</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Fecha de Discovery</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Asistencia</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">OM</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">AM</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Envío de calendario</th>
+                <th style="padding:10px 9px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Fecha reunión K.O.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:14px 9px;text-align:center;font-size:13px;font-weight:800;color:var(--ink)">
+                  ${esc(c.revenue || '-')}
+                </td>
+                <td style="padding:14px 9px;text-align:center;font-size:12px;color:var(--ink)">
+                  ${c.fechaDiscovery ? esc(fmtDate(c.fechaDiscovery)) : '-'}
+                </td>
+                <td style="padding:14px 9px;text-align:center">
+                  ${historyAttendanceLabel(c.asistioDiscovery)}
+                </td>
+                <td style="padding:14px 9px;text-align:center;font-size:12px;font-weight:700;color:var(--ink)">
+                  ${esc(c.om || '-')}
+                </td>
+                <td style="padding:14px 9px;text-align:center;font-size:12px;color:var(--ink);overflow-wrap:anywhere">
+                  ${esc(c.am || '-')}
+                </td>
+                <td style="padding:14px 9px;text-align:center">
+                  ${historyCalendarSentLabel(c.mailCalendario)}
+                </td>
+                <td style="padding:14px 9px;text-align:center;font-size:12px;font-weight:800;color:var(--ink)">
+                  ${c.fechaReunion ? esc(fmtDate(c.fechaReunion)) : '-'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    `).join('')
+    : '<div class="empty" style="padding:32px">Sin clientes en Histórico todavía.</div>';
 
   id('main').innerHTML = `
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
-      <div class="stageCard bg-gray" style="min-width:160px;padding:14px 20px">
-        <h3 style="margin:0 0 6px;font-size:13px">Completados</h3>
+      <div class="stageCard bg-gray" style="min-width:170px;padding:14px 20px">
+        <h3 style="margin:0 0 6px;font-size:13px">Histórico</h3>
         <div class="num" style="font-size:36px">${list.length}</div>
+        <div style="font-size:11px;color:var(--muted)">Clientes registrados</div>
       </div>
     </div>
-    <div style="background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(17,24,39,.04)">
-      <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px">
-        <thead>
-          <tr style="background:#F8FAFC;border-bottom:2px solid var(--border)">
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Empresa</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Mails</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">OM</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">AM</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Fecha reunión</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Completado</th>
-            <th style="padding:11px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Estado</th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>`;
+    <div>${cards}</div>
+  `;
 }
 
 /* =========================================================
