@@ -504,7 +504,7 @@ let state = {
   loaded: { pipeline:false, calendar:false, history:false }
 };
 
-const PIPELINE_SNAPSHOT_KEY = 'lebane_onboarding_pipeline_v19';
+const PIPELINE_SNAPSHOT_KEY = 'lebane_onboarding_pipeline_v24';
 const PIPELINE_SNAPSHOT_MAX_AGE = 30 * 60 * 1000;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1887,11 +1887,54 @@ async function manualToDiscovery(cId) {
   await runAction('moveToDiscovery', { id: cId }, 'Cliente movido a Discovery.');
 }
 
+
+function removeArchivedClientFromLocalState(cId) {
+  const targetId = String(cId || '');
+
+  ['Bienvenida','Discovery','Calendario'].forEach(stage => {
+    state.data.grouped[stage] = (state.data.grouped[stage] || []).filter(
+      c => String(cid(c)) !== targetId
+    );
+  });
+
+  state.data.calendar = (state.data.calendar || []).filter(
+    c => String(c.id || c.ID || '') !== targetId
+  );
+
+  // Recalcular contadores del Pipeline local inmediatamente.
+  state.data.counts.bienvenida = (state.data.grouped.Bienvenida || []).length;
+  state.data.counts.discovery  = (state.data.grouped.Discovery || []).length;
+  state.data.counts.calendario = (state.data.grouped.Calendario || []).length;
+
+  // Histórico debe volver a pedirse al servidor cuando se abra.
+  state.loaded.history = false;
+
+  // Calendario también se vuelve a consultar para asegurar consistencia,
+  // pero ya quitamos localmente la tarjeta/evento para que desaparezca al instante.
+  state.loaded.calendar = false;
+
+  savePipelineSnapshot();
+  render();
+}
+
 async function completeClient(cId) {
   if (!confirm('¿Marcar como completado y mover a Histórico?')) return;
-  state.loaded.history = false;
-  state.loaded.calendar = false;
-  await runAction('completeClient', { id: cId }, 'Cliente movido a Histórico.');
+
+  setLoading(true);
+  try {
+    const res = await callServer('completeClient', { id: cId });
+    toast((res && res.message) || 'Cliente movido a Histórico.');
+
+    removeArchivedClientFromLocalState(cId);
+
+    // Confirmar con datos frescos del backend sin bloquear la desaparición visual.
+    await loadPipelineData({ silent: true });
+
+  } catch (e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
 }
 
 async function runAction(action, payload, ok, refreshMode = 'pipeline') {
@@ -2576,21 +2619,40 @@ function openConfirmMeeting(cId) {
 }
 
 async function saveMeeting() {
+  const cId      = val('confirmId');
   const fechaVal = val('confirmFecha');
   const linkVal  = val('confirmLink');
-  if (!fechaVal) { toast('Completá la fecha y hora de la reunión.', true); return; }
 
-  state.loaded.calendar = false;
-  state.loaded.history = false;
+  if (!fechaVal) {
+    toast('Completá la fecha y hora de la reunión.', true);
+    return;
+  }
 
-  await runAction('confirmMeeting', {
-    id:           val('confirmId'),
-    fecha:        fechaVal,
-    link:         linkVal,
-    observaciones:val('confirmObs')
-  }, 'Reunión registrada. Cliente movido a Histórico.');
+  setLoading(true);
 
-  closeModal();
+  try {
+    const res = await callServer('confirmMeeting', {
+      id:            cId,
+      fecha:         fechaVal,
+      link:          linkVal,
+      observaciones: val('confirmObs')
+    });
+
+    toast((res && res.message) || 'Reunión registrada. Cliente movido a Histórico.');
+    closeModal();
+
+    // Sacarlo inmediatamente de la columna Calendario y de cualquier
+    // calendario ya cargado en memoria, sin esperar otra lectura de Sheets.
+    removeArchivedClientFromLocalState(cId);
+
+    // Refresco silencioso para confirmar el estado real del backend.
+    await loadPipelineData({ silent: true });
+
+  } catch (e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
 }
 
 
