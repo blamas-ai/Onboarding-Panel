@@ -2546,9 +2546,10 @@ async function doAddOm() {
   setLoading(true);
   try {
     const res = await callServer('addOm', { name, calendar: cal });
+    if(!res.ok) throw new Error(res.message || 'Error al agregar OM');
     toast((res&&res.message)||'OM agregado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2561,9 +2562,10 @@ async function doEditOm() {
   setLoading(true);
   try {
     const res = await callServer('editOm', { name, calendar: cal, active });
+    if(!res.ok) throw new Error(res.message || 'Error al actualizar OM');
     toast((res&&res.message)||'OM actualizado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2572,9 +2574,10 @@ async function doEditOm() {
 async function doToggleOm(name, active) {
   setLoading(true);
   try {
-    await callServer('toggleOmActive', { om: name, active });
+    const res = await callServer('toggleOmActive', { om: name, active });
+    if(!res.ok) throw new Error(res.message || 'Error al actualizar OM');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2585,9 +2588,10 @@ async function doDeleteOm(name) {
   setLoading(true);
   try {
     const res = await callServer('deleteOm', { om: name });
+    if(!res.ok) throw new Error(res.message || 'Error al eliminar OM');
     toast((res&&res.message)||'OM eliminado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2662,9 +2666,10 @@ async function doAddAm() {
   setLoading(true);
   try {
     const res = await callServer('addAm', { name, mail: mail });
+    if(!res.ok) throw new Error(res.message || 'Error al agregar AM');
     toast((res&&res.message)||'AM agregado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openAmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2677,9 +2682,10 @@ async function doEditAm() {
   setLoading(true);
   try {
     const res = await callServer('editAm', { name, mail, active });
+    if(!res.ok) throw new Error(res.message || 'Error al actualizar AM');
     toast((res&&res.message)||'AM actualizado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openAmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2688,9 +2694,10 @@ async function doEditAm() {
 async function doToggleAm(name, active) {
   setLoading(true);
   try {
-    await callServer('toggleAmActive', { am: name, active });
+    const res = await callServer('toggleAmActive', { am: name, active });
+    if(!res.ok) throw new Error(res.message || 'Error al actualizar AM');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openAmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2701,9 +2708,10 @@ async function doDeleteAm(name) {
   setLoading(true);
   try {
     const res = await callServer('deleteAm', { am: name });
+    if(!res.ok) throw new Error(res.message || 'Error al eliminar AM');
     toast((res&&res.message)||'AM eliminado.');
     closeModal();
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 200));
     await openAmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
