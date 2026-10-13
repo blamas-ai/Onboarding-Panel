@@ -419,6 +419,10 @@
             <span class="settingsIcon">👥</span>
             <span class="settingsText">Gestionar OMs<span class="settingsHint">Altas, bajas y calendarios</span></span>
           </button>
+          <button class="settingsItem" onclick="closeSettingsMenu();openAmManager()">
+            <span class="settingsIcon">👤</span>
+            <span class="settingsText">Gestionar AMs<span class="settingsHint">Altas, bajas y estado</span></span>
+          </button>
           <button class="settingsItem" onclick="closeSettingsMenu();runDebug()">
             <span class="settingsIcon">🐛</span>
             <span class="settingsText">Diagnóstico<span class="settingsHint">Revisar respuesta del servidor</span></span>
@@ -2543,6 +2547,8 @@ async function doAddOm() {
   try {
     const res = await callServer('addOm', { name, calendar: cal });
     toast((res&&res.message)||'OM agregado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2556,6 +2562,8 @@ async function doEditOm() {
   try {
     const res = await callServer('editOm', { name, calendar: cal, active });
     toast((res&&res.message)||'OM actualizado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2565,6 +2573,8 @@ async function doToggleOm(name, active) {
   setLoading(true);
   try {
     await callServer('toggleOmActive', { om: name, active });
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
     await openOmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
@@ -2576,7 +2586,125 @@ async function doDeleteOm(name) {
   try {
     const res = await callServer('deleteOm', { om: name });
     toast((res&&res.message)||'OM eliminado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
     await openOmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+// ── AM Manager ──
+async function openAmManager() {
+  setLoading(true);
+  try {
+    const res = await callServer('getAmList', {});
+    renderAmManager(res.list || []);
+  } catch(e) {
+    toast('Error: ' + errMsg(e), true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderAmManager(list) {
+  const rows = list.length ? list.map(am => `
+    <div class="panelCard" style="padding:12px 14px" id="am-row-${esc(am.name)}">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div style="font-weight:900;font-size:14px">${esc(am.name)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all">${esc(am.mail||'Sin email')}</div>
+        </div>
+        <span class="pill ${am.active?'green':'red'}" style="flex-shrink:0">${am.active?'✓ Activo':'✗ Inactivo'}</span>
+        <button class="btn small" onclick="openEditAm('${esc(am.name)}','${esc(am.mail||'')}',${am.active})">✏️ Editar</button>
+        <button class="btn small ${am.active?'danger':'success'}" onclick="doToggleAm('${esc(am.name)}',${!am.active})">${am.active?'Desactivar':'Activar'}</button>
+        <button class="btn small danger" onclick="doDeleteAm('${esc(am.name)}')">🗑</button>
+      </div>
+    </div>`).join('')
+    : '<div class="empty">No hay AMs cargados.</div>';
+
+  openModal('👤 Gestión de AMs', `
+    <p class="smallText" style="margin-bottom:12px">Solo los AMs <strong>activos</strong> pueden ser asignados a clientes.</p>
+    <div style="display:grid;gap:8px;margin-bottom:16px">${rows}</div>
+    <div class="divider"></div>
+    <p class="sectionTitle" style="margin:14px 0 10px">Agregar nuevo AM</p>
+    <div class="formGrid">
+      <div><label>Nombre del AM *</label><input id="newAmName" placeholder="ej: Juan"></div>
+      <div><label>Email</label><input id="newAmEmail" placeholder="juan@lebane.app" type="email"></div>
+    </div>`,
+    `<button class="btn" onclick="closeModal()">Cerrar</button>
+     <button class="btn primary" onclick="doAddAm()">+ Agregar AM</button>`
+  );
+}
+
+function openEditAm(name, mail, active) {
+  openModal('✏️ Editar AM — ' + esc(name), `
+    <input type="hidden" id="editAmName" value="${esc(name)}">
+    <div class="formGrid">
+      <div class="full"><label>Nombre</label><input value="${esc(name)}" disabled style="opacity:.5"></div>
+      <div class="full"><label>Email</label><input id="editAmEmail" value="${esc(mail)}"></div>
+      <div class="full">
+        <label>Estado</label>
+        <select id="editAmActive">
+          <option value="true"  ${active?'selected':''}>Activo</option>
+          <option value="false" ${!active?'selected':''}>Inactivo</option>
+        </select>
+      </div>
+    </div>`,
+    `<button class="btn" onclick="openAmManager()">← Volver</button>
+     <button class="btn primary" onclick="doEditAm()">Guardar cambios</button>`
+  );
+}
+
+async function doAddAm() {
+  const name = val('newAmName');
+  const mail  = val('newAmEmail');
+  if (!name) { toast('Completá el nombre del AM.', true); return; }
+  setLoading(true);
+  try {
+    const res = await callServer('addAm', { name, mail: mail });
+    toast((res&&res.message)||'AM agregado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
+    await openAmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doEditAm() {
+  const name   = val('editAmName');
+  const mail    = val('editAmEmail');
+  const active = val('editAmActive') === 'true';
+  setLoading(true);
+  try {
+    const res = await callServer('editAm', { name, mail, active });
+    toast((res&&res.message)||'AM actualizado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
+    await openAmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doToggleAm(name, active) {
+  setLoading(true);
+  try {
+    await callServer('toggleAmActive', { am: name, active });
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
+    await openAmManager();
+  } catch(e) { toast('Error: '+errMsg(e), true); }
+  finally { setLoading(false); }
+}
+
+async function doDeleteAm(name) {
+  if (!confirm('¿Eliminar el AM "' + name + '"? No se puede deshacer.')) return;
+  setLoading(true);
+  try {
+    const res = await callServer('deleteAm', { am: name });
+    toast((res&&res.message)||'AM eliminado.');
+    closeModal();
+    await new Promise(r => setTimeout(r, 100));
+    await openAmManager();
   } catch(e) { toast('Error: '+errMsg(e), true); }
   finally { setLoading(false); }
 }
