@@ -4122,18 +4122,42 @@ function debugVerClientesOnboarding() {
  * WEB API PARA VERCEL
  ****************************************************/
 function doPost(e) {
+  var response = {
+    ok: false,
+    error: true,
+    message: 'Error desconocido'
+  };
+
   try {
     var body = {};
-    if (e && e.postData && e.postData.contents) {
-      body = JSON.parse(e.postData.contents);
+    try {
+      if (e && e.postData && e.postData.contents) {
+        body = JSON.parse(e.postData.contents);
+      }
+    } catch (parseErr) {
+      return createSimpleJsonResponse_({ ok:false, error:true, message:'JSON inválido en request.' });
     }
+
     if (!body.action) {
-      return jsonResponseWithCORS_({ ok:false, error:true, message:'Falta indicar la acción.' });
+      return createSimpleJsonResponse_({ ok:false, error:true, message:'Falta indicar la acción.' });
     }
-    return jsonResponseWithCORS_(apiRouter(body.action, body.payload || {}));
+
+    var result = apiRouter(body.action, body.payload || {});
+    return createSimpleJsonResponse_(result);
+
   } catch (err) {
-    return jsonResponseWithCORS_({ ok:false, error:true, message:err.message || String(err) });
+    return createSimpleJsonResponse_({
+      ok:false,
+      error:true,
+      message:'Error en doPost: ' + (err.message || String(err))
+    });
   }
+}
+
+function createSimpleJsonResponse_(data) {
+  var output = ContentService.createTextOutput(JSON.stringify(data || {}));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
 }
 
 function doOptions(e) {
