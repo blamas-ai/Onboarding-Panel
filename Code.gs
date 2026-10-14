@@ -541,56 +541,72 @@ function getAppData(filters) {
  * CARGAS LIVIANAS POR VISTA
  ****************************************************/
 function buildPipelineData_() {
-  var grouped = { Bienvenida: [], Discovery: [], Calendario: [] };
-  var allClients = [];
-  var ss = getMainSpreadsheet_();
-  var sh = ss.getSheetByName(LEBANE.sheets.clients);
+  try {
+    var grouped = { Bienvenida: [], Discovery: [], Calendario: [] };
+    var allClients = [];
+    var ss = getMainSpreadsheet_();
+    var sh = ss.getSheetByName(LEBANE.sheets.clients);
 
-  if (sh && sh.getLastRow() >= 2) {
-    var values  = sh.getDataRange().getValues();
-    var headers = values[0].map(function(h){ return String(h||'').trim(); });
-    var empIdx  = headers.indexOf('Empresa');
+    if (sh && sh.getLastRow() >= 2) {
+      var values  = sh.getDataRange().getValues();
+      var headers = values[0].map(function(h){ return String(h||'').trim(); });
+      var empIdx  = headers.indexOf('Empresa');
 
-    for (var i = 1; i < values.length; i++) {
-      var empresa = String(empIdx >= 0 ? values[i][empIdx] : '').trim();
-      if (!empresa) continue;
+      for (var i = 1; i < values.length; i++) {
+        var empresa = String(empIdx >= 0 ? values[i][empIdx] : '').trim();
+        if (!empresa) continue;
 
-      var obj = {};
-      headers.forEach(function(h, idx){ obj[h] = values[i][idx]; });
-      obj.__row = i + 1;
-      if (!obj['Etapa']) obj['Etapa'] = 'Bienvenida';
-      if (!obj['Respondió Form']) obj['Respondió Form'] = 'NO';
+        var obj = {};
+        headers.forEach(function(h, idx){ obj[h] = values[i][idx]; });
+        obj.__row = i + 1;
+        if (!obj['Etapa']) obj['Etapa'] = 'Bienvenida';
+        if (!obj['Respondió Form']) obj['Respondió Form'] = 'NO';
 
-      var client = normalizeClientForUi_(obj);
-      var etapa = client.etapa || 'Bienvenida';
-      if (etapa === 'Histórico' || etapa === 'Historico') continue;
-      if (!grouped[etapa]) etapa = 'Bienvenida';
+        var client = normalizeClientForUi_(obj);
+        var etapa = client.etapa || 'Bienvenida';
+        if (etapa === 'Histórico' || etapa === 'Historico') continue;
+        if (!grouped[etapa]) etapa = 'Bienvenida';
 
-      grouped[etapa].push(client);
-      allClients.push(client);
+        grouped[etapa].push(client);
+        allClients.push(client);
+      }
     }
+
+    var histSh = ss.getSheetByName(LEBANE.sheets.history);
+    var historicoCount = histSh ? Math.max(0, histSh.getLastRow() - 1) : 0;
+
+    var unmatched = [];
+    try {
+      unmatched = readPendingUnmatched_();
+    } catch (e) {
+      Logger.log('readPendingUnmatched error: ' + e.message);
+    }
+
+    var elevated = allClients.filter(function(c){ return Number(c.daysInStage||0) >= 7; });
+
+    return {
+      ok: true,
+      counts: {
+        bienvenida: grouped.Bienvenida.length,
+        discovery: grouped.Discovery.length,
+        calendario: grouped.Calendario.length,
+        historico: historicoCount,
+        unmatched: unmatched.length
+      },
+      grouped: grouped,
+      unmatched: unmatched,
+      elevated: elevated
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.message || String(err),
+      counts: { bienvenida: 0, discovery: 0, calendario: 0, historico: 0, unmatched: 0 },
+      grouped: { Bienvenida: [], Discovery: [], Calendario: [] },
+      unmatched: [],
+      elevated: []
+    };
   }
-
-  var histSh = ss.getSheetByName(LEBANE.sheets.history);
-  var historicoCount = histSh ? Math.max(0, histSh.getLastRow() - 1) : 0;
-
-  var unmatched = readPendingUnmatched_();
-
-  var elevated = allClients.filter(function(c){ return Number(c.daysInStage||0) >= 7; });
-
-  return {
-    ok: true,
-    counts: {
-      bienvenida: grouped.Bienvenida.length,
-      discovery: grouped.Discovery.length,
-      calendario: grouped.Calendario.length,
-      historico: historicoCount,
-      unmatched: unmatched.length
-    },
-    grouped: grouped,
-    unmatched: unmatched,
-    elevated: elevated
-  };
 }
 
 function getPipelineData() {
