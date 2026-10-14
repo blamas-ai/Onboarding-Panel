@@ -3478,20 +3478,51 @@ function normalizeDiscoveryAttendance_(value) {
 function getUiCache_(name) {
   try {
     var raw = CacheService.getScriptCache().get('UI_' + name + '_V24');
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    return parsed;
   } catch (e) {
+    Logger.log('getUiCache_ error: ' + e.message);
     return null;
   }
 }
 
 function putUiCache_(name, data, seconds) {
   try {
+    // Ensure data is JSON serializable by converting to string all values
+    var safe = safeForJSON_(data);
+    var serialized = JSON.stringify(safe);
     CacheService.getScriptCache().put(
       'UI_' + name + '_V24',
-      JSON.stringify(data),
+      serialized,
       seconds || 25
     );
-  } catch (e) {}
+  } catch (e) {
+    Logger.log('putUiCache_ error: ' + e.message);
+  }
+}
+
+function safeForJSON_(obj) {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
+    return obj;
+  }
+  if (obj instanceof Date) {
+    return formatDate_(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(function(item) { return safeForJSON_(item); });
+  }
+  if (typeof obj === 'object') {
+    var result = {};
+    for (var key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        result[key] = safeForJSON_(obj[key]);
+      }
+    }
+    return result;
+  }
+  return String(obj);
 }
 
 function invalidateUiCache_() {
