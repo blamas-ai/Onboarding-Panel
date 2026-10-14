@@ -285,6 +285,7 @@
 <script>
 let currentTab = 'dashboard';
 let appData = {};
+const API_URL = 'https://script.google.com/macros/s/AKfycbwnnbEWsVUIws7nKV81c-cLCMyh8X5XW6WvZcdS-GdPO37fTkRS3iLEDOc6C3-_3HqG/exec';
 
 /* ======= INIT ======= */
 window.addEventListener('load', function() {
@@ -373,53 +374,43 @@ function renderStage(container, stage) {
 
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando ' + stageName.toLowerCase() + '...</p></div>';
 
-  google.script.run
-    .withSuccessHandler(function(result) {
-      if (!result.ok) {
-        container.innerHTML = '<div class="empty">Error: ' + (result.message || 'Error al cargar') + '</div>';
-        return;
-      }
-      const clients = result.clients || [];
-      if (!clients.length) {
-        container.innerHTML = '<div class="empty">No hay clientes en ' + stageName + '</div>';
-        return;
-      }
-      container.innerHTML = '<div class="clientList">' + clients.map(c => `
-        <div class="clientCard">
-          <div class="cardHeader">
-            <div>
-              <div class="clientTitle">${c.empresa || '—'}</div>
-              <div class="meta">${c.mails || '—'} · ${c.om ? 'OM: ' + c.om : '—'} · ${c.am ? 'AM: ' + c.am : '—'}</div>
-            </div>
-            <button class="btn small" onclick="openProfile('${c.id}')">Ver</button>
+  apiCall('getStageData', { stage: stageName }, function(result) {
+    if (!result.ok) {
+      container.innerHTML = '<div class="empty">Error: ' + (result.message || 'Error al cargar') + '</div>';
+      return;
+    }
+    const clients = result.clients || [];
+    if (!clients.length) {
+      container.innerHTML = '<div class="empty">No hay clientes en ' + stageName + '</div>';
+      return;
+    }
+    container.innerHTML = '<div class="clientList">' + clients.map(c => `
+      <div class="clientCard">
+        <div class="cardHeader">
+          <div>
+            <div class="clientTitle">${c.empresa || '—'}</div>
+            <div class="meta">${c.mails || '—'} · ${c.om ? 'OM: ' + c.om : '—'} · ${c.am ? 'AM: ' + c.am : '—'}</div>
           </div>
-          <div class="cardActions">
-            <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
-            ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
-            ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
-            ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
-          </div>
+          <button class="btn small" onclick="openProfile('${c.id}')">Ver</button>
         </div>
-      `).join('') + '</div>';
-    })
-    .withFailureHandler(function(err) {
-      container.innerHTML = '<div class="empty">Error de conexión: ' + err + '</div>';
-    })
-    .apiRouter('getStageData', { stage: stageName });
+        <div class="cardActions">
+          <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
+          ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
+          ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
+          ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
+        </div>
+      </div>
+    `).join('') + '</div>';
+  });
 }
 
 /* ======= DATA ======= */
 function loadData(force) {
-  google.script.run
-    .withSuccessHandler(function(result) {
-      appData = result;
-      document.getElementById('bellBadge').textContent = result.counts?.unmatched || 0;
-      renderContent();
-    })
-    .withFailureHandler(function(err) {
-      showToast('Error: ' + err, true);
-    })
-    .getPipelineData();
+  apiCall('getPipelineData', {}, function(result) {
+    appData = result;
+    document.getElementById('bellBadge').textContent = result.counts?.unmatched || 0;
+    renderContent();
+  });
 }
 
 function refreshData() {
@@ -436,71 +427,70 @@ function clearCache() {
 function testData() {
   document.getElementById('settingsMenu').classList.remove('open');
   showToast('Probando datos...');
-  google.script.run
-    .withSuccessHandler(function(result) {
-      console.log('Test Data Result:', result);
+  apiCall('testData', {}, function(result) {
+    console.log('Test Data Result:', result);
 
-      if (result.ok) {
-        let msg = '✅ Datos encontrados\n';
-        msg += 'Hoja: ' + result.sheetName + '\n';
-        msg += 'Filas: ' + result.totalRows + '\n';
-        msg += 'Columnas: ' + result.headerCount;
-        showToast(msg);
-      } else {
-        let msg = '❌ ' + result.message;
-        if (result.availableSheets) {
-          msg += '\n\nHojas disponibles:\n' + result.availableSheets.join(', ');
-        }
-        showToast(msg);
+    if (result.ok) {
+      let msg = '✅ Datos encontrados\n';
+      msg += 'Hoja: ' + result.sheetName + '\n';
+      msg += 'Filas: ' + result.totalRows + '\n';
+      msg += 'Columnas: ' + result.headerCount;
+      showToast(msg);
+    } else {
+      let msg = '❌ ' + result.message;
+      if (result.availableSheets) {
+        msg += '\n\nHojas disponibles:\n' + result.availableSheets.join(', ');
       }
-      console.log('Full result:', JSON.stringify(result, null, 2));
-    })
-    .withFailureHandler(function(err) {
-      showToast('❌ Error: ' + err, true);
-      console.error('Error:', err);
-    })
-    .apiRouter('testData', {});
+      showToast(msg);
+    }
+    console.log('Full result:', JSON.stringify(result, null, 2));
+  });
 }
 
 function apiCall(action, payload, callback) {
-  google.script.run
-    .withSuccessHandler(function(result) {
-      if (result.ok) showToast(result.message || 'Listo');
-      else showToast(result.message || 'Error', true);
-      if (callback) callback();
-    })
-    .withFailureHandler(function(err) {
-      showToast('Error: ' + err, true);
-    })
-    .apiRouter(action, payload || {});
+  const data = { action: action, ...payload };
+  
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.ok) showToast(result.message || 'Listo');
+    else showToast(result.message || 'Error', true);
+    if (callback) callback(result);
+  })
+  .catch(err => {
+    showToast('Error: ' + err, true);
+    console.error('Error:', err);
+  });
 }
 
 /* ======= MODALS ======= */
 function openProfile(id) {
-  google.script.run
-    .withSuccessHandler(function(result) {
-      if (!result.ok) { showToast('Error: ' + (result.message || 'No encontrado'), true); return; }
-      const c = result.client;
-      const modal = `
-        <div style="display:grid; gap:14px;">
-          <div>
-            <label>Empresa</label>
-            <input type="text" value="${c.empresa || ''}" onchange="updateClient(this,'Empresa','${c.id}')">
-          </div>
-          <div>
-            <label>Mails</label>
-            <input type="text" value="${c.mails || ''}" onchange="updateClient(this,'Mails','${c.id}')">
-          </div>
-          <div class="formGrid">
-            <div><label>OM</label><input type="text" value="${c.om || ''}" onchange="updateClient(this,'OM','${c.id}')"></div>
-            <div><label>AM</label><input type="text" value="${c.am || ''}" onchange="updateClient(this,'AM','${c.id}')"></div>
-          </div>
-          <div><label>Observaciones</label><textarea onchange="updateClient(this,'Observaciones','${c.id}')">${c.observaciones || ''}</textarea></div>
+  apiCall('getClientProfile', { id: id }, function(result) {
+    if (!result.ok) { showToast('Error: ' + (result.message || 'No encontrado'), true); return; }
+    const c = result.client;
+    const modal = `
+      <div style="display:grid; gap:14px;">
+        <div>
+          <label>Empresa</label>
+          <input type="text" value="${c.empresa || ''}" onchange="updateClient(this,'Empresa','${c.id}')">
         </div>
-      `;
-      showModal('Perfil: ' + c.empresa, modal, '<button class="btn" onclick="closeModal()">Cerrar</button>');
-    })
-    .apiRouter('getClientProfile', { id: id });
+        <div>
+          <label>Mails</label>
+          <input type="text" value="${c.mails || ''}" onchange="updateClient(this,'Mails','${c.id}')">
+        </div>
+        <div class="formGrid">
+          <div><label>OM</label><input type="text" value="${c.om || ''}" onchange="updateClient(this,'OM','${c.id}')"></div>
+          <div><label>AM</label><input type="text" value="${c.am || ''}" onchange="updateClient(this,'AM','${c.id}')"></div>
+        </div>
+        <div><label>Observaciones</label><textarea onchange="updateClient(this,'Observaciones','${c.id}')">${c.observaciones || ''}</textarea></div>
+      </div>
+    `;
+    showModal('Perfil: ' + c.empresa, modal, '<button class="btn" onclick="closeModal()">Cerrar</button>');
+  });
 }
 
 function openAddModal() {
@@ -644,12 +634,6 @@ function closeSettingsOnClickOutside(e) {
     menu.classList.remove('open');
     document.removeEventListener('click', closeSettingsOnClickOutside);
   }
-}
-
-function runDebug() {
-  google.script.run.withSuccessHandler(result => {
-    alert(JSON.stringify(result, null, 2));
-  }).getPanelHealth();
 }
 </script>
 </body>
