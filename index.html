@@ -236,6 +236,10 @@
             <span class="settingsIcon">🗑</span>
             <span>Limpiar caché</span>
           </button>
+          <button class="settingsItem" onclick="testData()">
+            <span class="settingsIcon">🔍</span>
+            <span>Debug: Test Data</span>
+          </button>
           <div class="settingsDivider"></div>
           <button class="settingsItem" onclick="openOmManager()">
             <span class="settingsIcon">👥</span>
@@ -427,6 +431,25 @@ function clearCache() {
     showToast('Caché limpiado, recargando...');
     setTimeout(() => location.reload(), 500);
   });
+}
+
+function testData() {
+  google.script.run
+    .withSuccessHandler(function(result) {
+      console.log('Test Data Result:', result);
+      let msg = result.ok ? 'OK: ' : 'ERROR: ';
+      msg += result.message || '';
+      if (result.sheetName) msg += '\nHoja: ' + result.sheetName;
+      if (result.totalRows) msg += '\nFilas: ' + result.totalRows;
+      if (result.headers) msg += '\nColumnas: ' + result.headers.join(', ');
+      showToast(msg);
+      console.log('Full result:', JSON.stringify(result, null, 2));
+    })
+    .withFailureHandler(function(err) {
+      showToast('Error en test: ' + err, true);
+      console.error('Error:', err);
+    })
+    .apiRouter('testData', {});
 }
 
 function apiCall(action, payload, callback) {

@@ -132,6 +132,7 @@ function apiRouter(action, payload) {
       case 'deleteAm':                result = deleteAm(payload.am || payload.email); break;
       case 'getStageData':            result = getStageData(payload.stage); break;
       case 'clearCache':              result = clearUiCache_(); break;
+      case 'testData':                result = testDataDebug_(); break;
       case 'installFormTrigger':      result = installFormTrigger(); break;
       case 'getFormTriggerStatus':    result = getFormTriggerStatus(); break;
       case 'registerClient':          result = registerClient(payload); break;
@@ -3505,6 +3506,48 @@ function clearUiCache_() {
     return { ok: true, message: 'Caché limpiado' };
   } catch (e) {
     return { ok: false, message: 'Error: ' + e.message };
+  }
+}
+
+function testDataDebug_() {
+  try {
+    var ss = getMainSpreadsheet_();
+    var sheetNames = ss.getSheetNames();
+
+    var clientsSheetName = LEBANE.sheets.clients;
+    var sh = ss.getSheetByName(clientsSheetName);
+
+    if (!sh) {
+      return {
+        ok: false,
+        message: 'Hoja no encontrada: ' + clientsSheetName,
+        availableSheets: sheetNames
+      };
+    }
+
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) {
+      return {
+        ok: false,
+        message: 'Hoja vacía o sin datos. Last row: ' + lastRow
+      };
+    }
+
+    var values = sh.getDataRange().getValues();
+    var headers = values[0];
+    var firstRow = values[1];
+
+    return {
+      ok: true,
+      message: 'Datos encontrados',
+      sheetName: clientsSheetName,
+      totalRows: lastRow,
+      headers: headers,
+      firstDataRow: firstRow,
+      headerCount: headers.length
+    };
+  } catch (e) {
+    return { ok: false, error: e.message, stack: e.stack };
   }
 }
 
