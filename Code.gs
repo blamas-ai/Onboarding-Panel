@@ -4089,6 +4089,11 @@ function doPost(e) {
   }
 }
 
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
 function jsonResponse_(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
