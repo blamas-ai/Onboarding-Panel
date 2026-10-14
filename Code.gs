@@ -130,6 +130,7 @@ function apiRouter(action, payload) {
       case 'addAm':                   result = addAm(payload); break;
       case 'editAm':                  result = editAm(payload); break;
       case 'deleteAm':                result = deleteAm(payload.am || payload.email); break;
+      case 'getStageData':            result = getStageData(payload.stage); break;
       case 'installFormTrigger':      result = installFormTrigger(); break;
       case 'getFormTriggerStatus':    result = getFormTriggerStatus(); break;
       case 'registerClient':          result = registerClient(payload); break;
@@ -596,6 +597,54 @@ function getPipelineData() {
 
   var data = buildPipelineData_();
   putUiCache_('pipeline', data, 60);
+  return data;
+}
+
+/**
+ * Carga datos de una etapa específica (Bienvenida, Discovery, Calendario)
+ * Mucho más rápido que cargar todo. Optimizado para pestañas por etapa.
+ */
+function getStageData(stage) {
+  stage = stage || 'Bienvenida';
+  var cacheKey = 'stage_' + stage;
+  var cached = getUiCache_(cacheKey);
+  if (cached) return cached;
+
+  var sh = getMainSpreadsheet_().getSheetByName(LEBANE.sheets.clients);
+  var clients = [];
+
+  if (sh && sh.getLastRow() >= 2) {
+    var values  = sh.getDataRange().getValues();
+    var headers = values[0].map(function(h){ return String(h||'').trim(); });
+    var empIdx  = headers.indexOf('Empresa');
+    var etapaIdx = headers.indexOf('Etapa');
+
+    for (var i = 1; i < values.length; i++) {
+      var empresa = String(empIdx >= 0 ? values[i][empIdx] : '').trim();
+      if (!empresa) continue;
+
+      var etapa = String(etapaIdx >= 0 ? values[i][etapaIdx] : 'Bienvenida').trim();
+      if (etapa !== stage) continue;
+
+      var obj = {};
+      headers.forEach(function(h, idx){ obj[h] = values[i][idx]; });
+      obj.__row = i + 1;
+      if (!obj['Etapa']) obj['Etapa'] = 'Bienvenida';
+      if (!obj['Respondió Form']) obj['Respondió Form'] = 'NO';
+
+      var client = normalizeClientForUi_(obj);
+      clients.push(client);
+    }
+  }
+
+  var data = {
+    ok: true,
+    stage: stage,
+    clients: clients,
+    count: clients.length
+  };
+
+  putUiCache_(cacheKey, data, 90);
   return data;
 }
 
