@@ -4081,19 +4081,32 @@ function doPost(e) {
       body = JSON.parse(e.postData.contents);
     }
     if (!body.action) {
-      return jsonResponse_({ ok:false, error:true, message:'Falta indicar la acción.' });
+      var resp = jsonResponse_({ ok:false, error:true, message:'Falta indicar la acción.' });
+      resp.addHeader('Access-Control-Allow-Origin', '*');
+      resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return resp;
     }
-    return jsonResponse_(apiRouter(body.action, body.payload || {}));
+    var resp = jsonResponse_(apiRouter(body.action, body.payload || {}));
+    resp.addHeader('Access-Control-Allow-Origin', '*');
+    resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return resp;
   } catch (err) {
-    return jsonResponse_({ ok:false, error:true, message:err.message || String(err) });
+    var resp = jsonResponse_({ ok:false, error:true, message:err.message || String(err) });
+    resp.addHeader('Access-Control-Allow-Origin', '*');
+    resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return resp;
   }
 }
 
 function doOptions(e) {
-  return HtmlService.createHtmlOutput('')
+  return ContentService.createTextOutput('')
     .addHeader('Access-Control-Allow-Origin', '*')
     .addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .addHeader('Access-Control-Allow-Headers', 'Content-Type');
+    .addHeader('Access-Control-Allow-Headers', 'Content-Type')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 function jsonResponse_(data) {
