@@ -240,6 +240,10 @@
             <span class="settingsIcon">🔍</span>
             <span>Debug: Test Data</span>
           </button>
+          <button class="settingsItem" onclick="testConnection()">
+            <span class="settingsIcon">🔌</span>
+            <span>Debug: Test Conexión API</span>
+          </button>
           <div class="settingsDivider"></div>
           <button class="settingsItem" onclick="openOmManager()">
             <span class="settingsIcon">👥</span>
@@ -634,6 +638,33 @@ function closeSettingsOnClickOutside(e) {
     menu.classList.remove('open');
     document.removeEventListener('click', closeSettingsOnClickOutside);
   }
+
+function testConnection() {
+  document.getElementById('settingsMenu').classList.remove('open');
+  showToast('Probando conexión...');
+  console.log('🔌 Intentando conectar a:', API_URL);
+
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getPipelineData', payload: {} })
+  })
+  .then(r => {
+    console.log('✅ Response status:', r.status);
+    return r.json();
+  })
+  .then(result => {
+    console.log('✅ Data received:', result);
+    if (result.ok || result.counts) {
+      showToast('✅ Conexión exitosa\n\nBienvenida: ' + (result.counts?.bienvenida || 0) + '\nDiscovery: ' + (result.counts?.discovery || 0));
+    } else {
+      showToast('⚠️ Conexión OK pero error: ' + (result.message || 'Desconocido'), true);
+    }
+  })
+  .catch(err => {
+    console.error('❌ Error:', err);
+    showToast('❌ Error de conexión:\n\n' + err.message, true);
+  });
 }
 </script>
 </body>
