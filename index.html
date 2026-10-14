@@ -102,6 +102,15 @@
     .stageCard h3 { margin:0 0 10px; font-size:14px; color:var(--muted); }
     .num { font-size:42px; font-weight:950; letter-spacing:-.05em; margin:10px 0; }
     .stageCard p { margin:0; color:var(--muted); font-size:12px; }
+    .companiesList {
+      margin-top:16px; padding-top:16px; border-top:1px solid rgba(0,0,0,.1);
+      text-align:left; font-size:12px;
+    }
+    .companiesList a {
+      display:block; margin:6px 0; color:var(--blue); text-decoration:none; cursor:pointer;
+      padding:4px 0; transition:.1s ease;
+    }
+    .companiesList a:hover { text-decoration:underline; }
     .stageCard.welcome { background:var(--blue-soft); }
     .stageCard.discovery { background:var(--yellow); }
     .stageCard.calendar { background:var(--green); }
@@ -294,32 +303,46 @@ function renderContent() {
 
 function renderDashboard(container) {
   const h = appData.counts || {};
+  const grouped = appData.grouped || {};
+
+  function renderCompanies(stage) {
+    const companies = grouped[stage] || [];
+    if (!companies.length) return '';
+    return '<div class="companiesList">' + companies.map(c =>
+      `<a onclick="openProfile('${c.id}')">${c.empresa || '—'}</a>`
+    ).join('') + '</div>';
+  }
+
   container.innerHTML = `
     <div class="dashboard">
       <div style="margin-bottom:20px;">
         <h2 style="margin-bottom:10px;">Resumen de etapas</h2>
-        <p style="color:var(--muted); margin-bottom:20px;">Haz clic en una tarjeta para ver los clientes</p>
+        <p style="color:var(--muted); margin-bottom:20px;">Haz clic en un nombre para ver detalles</p>
       </div>
       <div class="stageCards">
-        <div class="stageCard welcome" onclick="switchTab('bienvenida'); document.querySelectorAll('.tab')[1].click();">
+        <div class="stageCard welcome">
           <h3>Bienvenida</h3>
           <div class="num">${h.bienvenida || 0}</div>
           <p>clientes pendientes</p>
+          ${renderCompanies('Bienvenida')}
         </div>
-        <div class="stageCard discovery" onclick="switchTab('discovery'); document.querySelectorAll('.tab')[2].click();">
+        <div class="stageCard discovery">
           <h3>Discovery</h3>
           <div class="num">${h.discovery || 0}</div>
           <p>en introducción</p>
+          ${renderCompanies('Discovery')}
         </div>
-        <div class="stageCard calendar" onclick="switchTab('calendario'); document.querySelectorAll('.tab')[3].click();">
+        <div class="stageCard calendar">
           <h3>Calendario</h3>
           <div class="num">${h.calendario || 0}</div>
           <p>agenda pendiente</p>
+          ${renderCompanies('Calendario')}
         </div>
-        <div class="stageCard historic" onclick="switchTab('historico'); document.querySelectorAll('.tab')[4].click();">
+        <div class="stageCard historic">
           <h3>Histórico</h3>
           <div class="num">${h.historico || 0}</div>
           <p>completados</p>
+          ${renderCompanies('Histórico')}
         </div>
       </div>
 
