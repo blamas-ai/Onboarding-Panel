@@ -131,6 +131,7 @@ function apiRouter(action, payload) {
       case 'editAm':                  result = editAm(payload); break;
       case 'deleteAm':                result = deleteAm(payload.am || payload.email); break;
       case 'getStageData':            result = getStageData(payload.stage); break;
+      case 'clearCache':              result = clearUiCache_(); break;
       case 'installFormTrigger':      result = installFormTrigger(); break;
       case 'getFormTriggerStatus':    result = getFormTriggerStatus(); break;
       case 'registerClient':          result = registerClient(payload); break;
@@ -3484,6 +3485,27 @@ function invalidateUiCache_() {
       'UI_history_V24'
     ]);
   } catch (e) {}
+}
+
+function clearUiCache_() {
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.removeAll([
+      'UI_pipeline_V24',
+      'UI_calendar_V24',
+      'UI_history_V24',
+      'UI_pipeline',
+      'UI_calendar',
+      'UI_history',
+      'UI_stage_Bienvenida',
+      'UI_stage_Discovery',
+      'UI_stage_Calendario',
+      'UI_stage_Histórico'
+    ]);
+    return { ok: true, message: 'Caché limpiado' };
+  } catch (e) {
+    return { ok: false, message: 'Error: ' + e.message };
+  }
 }
 
 function shouldInvalidateUiCache_(action) {

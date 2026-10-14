@@ -228,9 +228,13 @@
             <span class="settingsIcon">↻</span>
             <span>Sincronizar Form</span>
           </button>
-          <button class="settingsItem" onclick="loadData(true)">
+          <button class="settingsItem" onclick="refreshData()">
             <span class="settingsIcon">↺</span>
             <span>Actualizar datos</span>
+          </button>
+          <button class="settingsItem" onclick="clearCache()">
+            <span class="settingsIcon">🗑</span>
+            <span>Limpiar caché</span>
           </button>
           <div class="settingsDivider"></div>
           <button class="settingsItem" onclick="openOmManager()">
@@ -412,6 +416,17 @@ function loadData(force) {
       showToast('Error: ' + err, true);
     })
     .getPipelineData();
+}
+
+function refreshData() {
+  clearCache();
+}
+
+function clearCache() {
+  apiCall('clearCache', {}, function() {
+    showToast('Caché limpiado, recargando...');
+    setTimeout(() => location.reload(), 500);
+  });
 }
 
 function apiCall(action, payload, callback) {
