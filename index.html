@@ -434,19 +434,29 @@ function clearCache() {
 }
 
 function testData() {
+  document.getElementById('settingsMenu').classList.remove('open');
+  showToast('Probando datos...');
   google.script.run
     .withSuccessHandler(function(result) {
       console.log('Test Data Result:', result);
-      let msg = result.ok ? 'OK: ' : 'ERROR: ';
-      msg += result.message || '';
-      if (result.sheetName) msg += '\nHoja: ' + result.sheetName;
-      if (result.totalRows) msg += '\nFilas: ' + result.totalRows;
-      if (result.headers) msg += '\nColumnas: ' + result.headers.join(', ');
-      showToast(msg);
+
+      if (result.ok) {
+        let msg = '✅ Datos encontrados\n';
+        msg += 'Hoja: ' + result.sheetName + '\n';
+        msg += 'Filas: ' + result.totalRows + '\n';
+        msg += 'Columnas: ' + result.headerCount;
+        showToast(msg);
+      } else {
+        let msg = '❌ ' + result.message;
+        if (result.availableSheets) {
+          msg += '\n\nHojas disponibles:\n' + result.availableSheets.join(', ');
+        }
+        showToast(msg);
+      }
       console.log('Full result:', JSON.stringify(result, null, 2));
     })
     .withFailureHandler(function(err) {
-      showToast('Error en test: ' + err, true);
+      showToast('❌ Error: ' + err, true);
       console.error('Error:', err);
     })
     .apiRouter('testData', {});
