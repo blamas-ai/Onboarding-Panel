@@ -4081,23 +4081,11 @@ function doPost(e) {
       body = JSON.parse(e.postData.contents);
     }
     if (!body.action) {
-      var resp = jsonResponse_({ ok:false, error:true, message:'Falta indicar la acción.' });
-      resp.addHeader('Access-Control-Allow-Origin', '*');
-      resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
-      return resp;
+      return jsonResponseWithCORS_({ ok:false, error:true, message:'Falta indicar la acción.' });
     }
-    var resp = jsonResponse_(apiRouter(body.action, body.payload || {}));
-    resp.addHeader('Access-Control-Allow-Origin', '*');
-    resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return resp;
+    return jsonResponseWithCORS_(apiRouter(body.action, body.payload || {}));
   } catch (err) {
-    var resp = jsonResponse_({ ok:false, error:true, message:err.message || String(err) });
-    resp.addHeader('Access-Control-Allow-Origin', '*');
-    resp.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    resp.addHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return resp;
+    return jsonResponseWithCORS_({ ok:false, error:true, message:err.message || String(err) });
   }
 }
 
@@ -4110,7 +4098,18 @@ function doOptions(e) {
 }
 
 function jsonResponse_(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  var output = ContentService
+    .createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+function jsonResponseWithCORS_(data) {
+  var output = ContentService
+    .createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  output.addHeader('Access-Control-Allow-Origin', '*');
+  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+  return output;
 }
