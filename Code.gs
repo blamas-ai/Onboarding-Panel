@@ -4090,8 +4090,10 @@ function doPost(e) {
 }
 
 function doOptions(e) {
-  return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
+  return HtmlService.createHtmlOutput('')
+    .addHeader('Access-Control-Allow-Origin', '*')
+    .addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .addHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 function jsonResponse_(data) {
