@@ -14,7 +14,8 @@ const LEBANE = {
     history:   'Histórico clientes',
     audit:     'Auditoría',
     unmatched: 'Respuestas sin match',
-    config:    'Configuración'
+    config:    'Configuración',
+    payments:  'Payments'
   },
 
   form: {
@@ -168,7 +169,7 @@ function setupOnboardingSystem() {
     'Fecha Reunión','Link Reunión',
     'Fecha Ingreso Etapa','Última Actualización',
     'FUP Bienvenida','FUP Discovery','FUP Calendario',
-    'Observaciones','Comentarios Internos'
+    'Observaciones','Comentarios Internos','Payments'
   ]);
 
   ensureSheet_(ss, LEBANE.sheets.calendar, [
@@ -189,6 +190,19 @@ function setupOnboardingSystem() {
 
   ensureSheet_(ss, LEBANE.sheets.audit, [
     'Fecha','ID','Empresa','Etapa','Acción','Detalle','Usuario'
+  ]);
+
+  ensureSheet_(ss, LEBANE.sheets.payments, [
+    'ID','Empresa','Mails','Revenue','Fecha Ingreso','Reimplementado','Etapa','Estado','OM','AM',
+    'Mail Bienvenida Enviado','Fecha Envío Bienvenida','Fecha Programada Bienvenida',
+    'Respondió Form','Link Respuestas','ID Respuesta Form',
+    'Mail Discovery Enviado','Fecha Envío Discovery',
+    'Fecha Discovery','Link Discovery','Asistió Discovery',
+    'Mail Calendario Enviado','Fecha Envío Calendario',
+    'Fecha Reunión','Link Reunión',
+    'Fecha Ingreso Etapa','Última Actualización',
+    'FUP Bienvenida','FUP Discovery','FUP Calendario',
+    'Observaciones','Comentarios Internos','Payments'
   ]);
 
   ensureSheet_(ss, LEBANE.sheets.unmatched, [
@@ -1128,6 +1142,7 @@ function addClient(data) {
   var headers     = getHeaders_(clientSheet);
   var id          = Utilities.getUuid();
   var now         = new Date();
+  var payments    = normalizeYesNo_(data.payments, 'NO');
 
   var rowObject = {
     'ID': id, 'Empresa': empresa, 'Mails': mails,
@@ -1147,10 +1162,19 @@ function addClient(data) {
     'Fecha Reunión': '', 'Link Reunión': '',
     'Fecha Ingreso Etapa': now, 'Última Actualización': now,
     'FUP Bienvenida': 0, 'FUP Discovery': 0, 'FUP Calendario': 0,
-    'Observaciones': clean_(data.observaciones), 'Comentarios Internos': ''
+    'Observaciones': clean_(data.observaciones), 'Comentarios Internos': '',
+    'Payments': payments
   };
 
   appendObject_(clientSheet, headers, rowObject);
+
+  // Si Payments = SI, también guardar en la hoja "Payments"
+  if (payments === 'SI') {
+    var paymentsSheet = getSheet_(LEBANE.sheets.payments);
+    var paymentsHeaders = getHeaders_(paymentsSheet);
+    appendObject_(paymentsSheet, paymentsHeaders, rowObject);
+  }
+
   audit_(id, empresa, 'Bienvenida', 'Cliente creado', 'Desde panel.');
   try { syncFormResponses(); } catch(syncErr) { Logger.log('[addClient] sync form: ' + syncErr.message); }
 

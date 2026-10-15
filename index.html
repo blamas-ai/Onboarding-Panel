@@ -506,6 +506,7 @@ function openAddModal() {
       <div><label>OM</label><select id="om"><option>—</option><option>Agustin</option><option>Gabriela H</option><option>Julieta</option><option>Brisa</option></select></div>
       <div><label>AM</label><select id="am"><option>—</option><option>a.nunez@lebane.app</option><option>g.murillo@lebane.app</option></select></div>
       <div><label>Reimplementado</label><select id="reimplementado"><option value="NO">No</option><option value="SI">Sí</option></select></div>
+      <div><label>Payments</label><select id="payments"><option value="NO">No</option><option value="SI">Sí</option></select></div>
       <div class="full"><label>Observaciones</label><textarea id="observaciones" placeholder="Notas internas..."></textarea></div>
     </div>
   `;
@@ -523,6 +524,7 @@ function doAddClient() {
     om: document.getElementById('om').value || '',
     am: document.getElementById('am').value || '',
     reimplementado: document.getElementById('reimplementado').value,
+    payments: document.getElementById('payments').value,
     observaciones: document.getElementById('observaciones').value
   };
   apiCall('addClient', data, function() { closeModal(); loadData(); });
