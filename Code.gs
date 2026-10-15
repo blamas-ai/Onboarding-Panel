@@ -4155,7 +4155,9 @@ function doPost(e) {
 }
 
 function createSimpleJsonResponse_(data) {
-  var output = ContentService.createTextOutput(JSON.stringify(data || {}));
+  // Asegurar que todos los datos sean JSON-serializable antes de stringify
+  var safe = safeForJSON_(data || {});
+  var output = ContentService.createTextOutput(JSON.stringify(safe));
   output.setMimeType(ContentService.MimeType.JSON);
   return output;
 }
