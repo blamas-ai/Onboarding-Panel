@@ -519,9 +519,13 @@ function openAddModal() {
     <button class="btn primary" id="btnSaveAdd">Guardar</button>
   `);
 
-  // Agregar event listeners después de inyectar el HTML
-  document.getElementById('btnCancelAdd').addEventListener('click', closeModal);
-  document.getElementById('btnSaveAdd').addEventListener('click', doAddClient);
+  // Agregar event listeners con pequeño delay para asegurar que el HTML está listo
+  setTimeout(function() {
+    var btnCancel = document.getElementById('btnCancelAdd');
+    var btnSave = document.getElementById('btnSaveAdd');
+    if (btnCancel) btnCancel.addEventListener('click', closeModal);
+    if (btnSave) btnSave.addEventListener('click', doAddClient);
+  }, 50);
 }
 
 function doAddClient() {
