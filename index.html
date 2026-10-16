@@ -398,38 +398,75 @@ function renderStage(container, stage) {
       container.innerHTML = '<div class="empty">No hay clientes en ' + stageName + '</div>';
       return;
     }
-    container.innerHTML = '<div class="clientList">' + clients.map(c => `
-      <div class="clientCard">
-        ${c.isNewStage ? '<div class="newBadge">🆕 New</div>' : ''}
-        <div class="cardHeader">
-          <div>
-            <div class="clientTitle">${c.empresa || '—'}</div>
-            <div class="meta">${c.mails || '—'} · ${c.om ? 'OM: ' + c.om : '—'} · ${c.am ? 'AM: ' + c.am : '—'}</div>
-          </div>
-          <button class="btn small" onclick="openProfile('${c.id}')">Ver</button>
+    if (stage === 'payments') {
+      // Vista especial para Payments: tabla con Empresa, OM, AM, Fecha de reunión
+      let tbody = '';
+      clients.forEach(c => {
+        tbody += `
+          <tr>
+            <td>${c.empresa || '—'}</td>
+            <td>${c.om || '—'}</td>
+            <td>${c.am || '—'}</td>
+            <td>${c.fecha || '—'}</td>
+            <td style="display:flex; gap:5px; font-size:12px;">
+              <button class="btn small" onclick="openProfile('${c.id}')">👁️</button>
+              <button class="btn small" onclick="apiCall('completeClient',{id:'${c.id}'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      container.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+                <th style="padding:10px; text-align:left;">Empresa</th>
+                <th style="padding:10px; text-align:left;">OM</th>
+                <th style="padding:10px; text-align:left;">AM</th>
+                <th style="padding:10px; text-align:left;">Fecha Reunión</th>
+                <th style="padding:10px; text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tbody || '<tr><td colspan="5" style="padding:20px; text-align:center; color:#9ca3af;">Sin clientes con pagos pendientes</td></tr>'}
+            </tbody>
+          </table>
         </div>
-        <div class="mailStatus">
-          <div class="mailBadge ${c.mailBienvenida === '✅' ? 'sent' : 'pending'}">
-            📧 Bienvenida ${c.mailBienvenida === '✅' ? '✅' : '⏳'}
+      `;
+    } else {
+      container.innerHTML = '<div class="clientList">' + clients.map(c => `
+        <div class="clientCard">
+          ${c.isNewStage ? '<div class="newBadge">🆕 New</div>' : ''}
+          <div class="cardHeader">
+            <div>
+              <div class="clientTitle">${c.empresa || '—'}</div>
+              <div class="meta">${c.mails || '—'} · ${c.om ? 'OM: ' + c.om : '—'} · ${c.am ? 'AM: ' + c.am : '—'}</div>
+            </div>
+            <button class="btn small" onclick="openProfile('${c.id}')">Ver</button>
           </div>
-          <div class="mailBadge ${c.mailDiscovery === '✅' ? 'sent' : 'pending'}">
-            🔍 Discovery ${c.mailDiscovery === '✅' ? '✅' : '⏳'}
+          <div class="mailStatus">
+            <div class="mailBadge ${c.mailBienvenida === '✅' ? 'sent' : 'pending'}">
+              📧 Bienvenida ${c.mailBienvenida === '✅' ? '✅' : '⏳'}
+            </div>
+            <div class="mailBadge ${c.mailDiscovery === '✅' ? 'sent' : 'pending'}">
+              🔍 Discovery ${c.mailDiscovery === '✅' ? '✅' : '⏳'}
+            </div>
+            <div class="mailBadge ${c.mailCalendario === '✅' ? 'sent' : 'pending'}">
+              📅 Calendario ${c.mailCalendario === '✅' ? '✅' : '⏳'}
+            </div>
           </div>
-          <div class="mailBadge ${c.mailCalendario === '✅' ? 'sent' : 'pending'}">
-            📅 Calendario ${c.mailCalendario === '✅' ? '✅' : '⏳'}
+          <div class="cardActions">
+            <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
+            <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP ${c.etapa === 'Bienvenida' ? '(' + (c.fupBienvenida || 0) + ')' : c.etapa === 'Discovery' ? '(' + (c.fupDiscovery || 0) + ')' : c.etapa === 'Calendario' ? '(' + (c.fupCalendario || 0) + ')' : '(0)'}</button>
+            ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
+            ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
+            ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
+            ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
           </div>
         </div>
-        <div class="cardActions">
-          <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
-          <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP ${c.etapa === 'Bienvenida' ? '(' + (c.fupBienvenida || 0) + ')' : c.etapa === 'Discovery' ? '(' + (c.fupDiscovery || 0) + ')' : c.etapa === 'Calendario' ? '(' + (c.fupCalendario || 0) + ')' : '(0)'}</button>
-          ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
-          ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
-          ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
-          ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
-          ${stage === 'payments' ? '<button class="btn small" onclick="apiCall(\'completeClient\',{id:\''+c.id+'\'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅ Pasar a Histórico</button>' : ''}
-        </div>
-      </div>
-    `).join('') + '</div>';
+      `).join('') + '</div>';
+    }
   });
 }
 

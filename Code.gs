@@ -1842,18 +1842,11 @@ function confirmMeeting(data) {
   var payments = String(client['Payments'] || '').trim();
   var destination = 'Histórico';
 
-  if (payments === 'SI') {
-    // El cliente queda en la hoja Clientes y etapas pero con etapa "Payments"
-    destination = 'Payments';
-
-    // Actualizar la etapa a "Payments"
-    var map = getHeaderMap_(sh);
-    sh.getRange(row, map['Etapa']).setValue('Payments');
-    SpreadsheetApp.flush();
-  } else {
-    // Archiva el cliente normalmente a Histórico
+  if (payments !== 'SI') {
+    // Solo archiva a Histórico si Payments != SI
     archiveClientAfterMeetingScheduled_(found, client);
   }
+  // Si Payments = SI, queda en Calendario pero visible en solapa Payments
 
   invalidateUiCache_();
 
@@ -1862,7 +1855,7 @@ function confirmMeeting(data) {
     message:
       'Reunión registrada para ' +
       formatDate_(fecha) +
-      '. Cliente movido a ' + destination + '.'
+      (payments === 'SI' ? '. Disponible en solapa Payments.' : '. Cliente movido a Histórico.')
   };
 }
 
