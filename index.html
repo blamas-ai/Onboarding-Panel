@@ -633,11 +633,241 @@ function doSaveMeeting(id) {
 }
 
 function openOmManager() {
-  alert('Abrir gestor de OMs (implementar modal)');
+  apiCall('getOmList', {}, function(result) {
+    if (!result.ok) {
+      showToast('Error al cargar OMs: ' + result.message, true);
+      return;
+    }
+
+    const oms = result.oms || [];
+    let tbody = '';
+    oms.forEach(om => {
+      const statusBadge = om.active ? '✅ Activo' : '❌ Inactivo';
+      tbody += `
+        <tr>
+          <td>${om.name || '—'}</td>
+          <td>${om.calendarLink ? '<a href="' + om.calendarLink + '" target="_blank">Ver →</a>' : '—'}</td>
+          <td>${statusBadge}</td>
+          <td style="display:flex; gap:5px; font-size:12px;">
+            <button class="btn small" onclick="editOmModal('${om.name}')">✏️</button>
+            <button class="btn small" onclick="toggleOmStatus('${om.name}', ${!om.active})" style="background:${om.active ? '#fed7aa' : '#a7f3d0'};">⚡</button>
+            <button class="btn small" onclick="doDeleteOm('${om.name}')" style="background:#fee2e2;">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    const modal = `
+      <div style="margin-bottom:20px;">
+        <button class="btn primary" onclick="addOmModal()" style="margin-bottom:10px;">➕ Agregar OM</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+              <th style="padding:10px; text-align:left;">Nombre</th>
+              <th style="padding:10px; text-align:left;">Calendly</th>
+              <th style="padding:10px; text-align:left;">Estado</th>
+              <th style="padding:10px; text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tbody || '<tr><td colspan="4" style="padding:20px; text-align:center; color:#9ca3af;">Sin OMs</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    showModal('Gestionar OMs', modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
+  });
+}
+
+function addOmModal() {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Nombre</label><input id="omName" type="text" placeholder="e.g., Agustin"></div>
+      <div class="full"><label>Link Calendly</label><input id="omLink" type="url" placeholder="https://calendly.com/..."></div>
+    </div>
+  `;
+  showModal('Agregar OM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doAddOm()">Guardar</button>
+  `);
+}
+
+function doAddOm() {
+  const name = document.getElementById('omName').value.trim();
+  const link = document.getElementById('omLink').value.trim();
+
+  if (!name) {
+    showToast('Completá el nombre del OM', true);
+    return;
+  }
+
+  apiCall('addOm', { name: name, calendarLink: link }, function() {
+    closeModal();
+    openOmManager();
+  });
+}
+
+function editOmModal(omName) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Nombre</label><input id="omName" type="text" value="${omName}"></div>
+      <div class="full"><label>Link Calendly</label><input id="omLink" type="url" placeholder="https://calendly.com/..."></div>
+    </div>
+  `;
+  showModal('Editar OM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doEditOm('${omName}')">Guardar</button>
+  `);
+}
+
+function doEditOm(oldName) {
+  const newName = document.getElementById('omName').value.trim();
+  const link = document.getElementById('omLink').value.trim();
+
+  if (!newName) {
+    showToast('Completá el nombre del OM', true);
+    return;
+  }
+
+  apiCall('editOm', { oldName: oldName, newName: newName, calendarLink: link }, function() {
+    closeModal();
+    openOmManager();
+  });
+}
+
+function toggleOmStatus(omName, active) {
+  apiCall('toggleOmActive', { om: omName, active: active }, function() {
+    openOmManager();
+  });
+}
+
+function doDeleteOm(omName) {
+  if (confirm('¿Eliminar OM ' + omName + '?')) {
+    apiCall('deleteOm', { om: omName }, function() {
+      openOmManager();
+    });
+  }
 }
 
 function openAmManager() {
-  alert('Abrir gestor de AMs (implementar modal)');
+  apiCall('getAmList', {}, function(result) {
+    if (!result.ok) {
+      showToast('Error al cargar AMs: ' + result.message, true);
+      return;
+    }
+
+    const ams = result.ams || [];
+    let tbody = '';
+    ams.forEach(am => {
+      const statusBadge = am.active ? '✅ Activo' : '❌ Inactivo';
+      tbody += `
+        <tr>
+          <td>${am.email || '—'}</td>
+          <td>${statusBadge}</td>
+          <td style="display:flex; gap:5px; font-size:12px;">
+            <button class="btn small" onclick="editAmModal('${am.email}')">✏️</button>
+            <button class="btn small" onclick="toggleAmStatus('${am.email}', ${!am.active})" style="background:${am.active ? '#fed7aa' : '#a7f3d0'};">⚡</button>
+            <button class="btn small" onclick="doDeleteAm('${am.email}')" style="background:#fee2e2;">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    const modal = `
+      <div style="margin-bottom:20px;">
+        <button class="btn primary" onclick="addAmModal()" style="margin-bottom:10px;">➕ Agregar AM</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+              <th style="padding:10px; text-align:left;">Email</th>
+              <th style="padding:10px; text-align:left;">Estado</th>
+              <th style="padding:10px; text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tbody || '<tr><td colspan="3" style="padding:20px; text-align:center; color:#9ca3af;">Sin AMs</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    showModal('Gestionar AMs', modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
+  });
+}
+
+function addAmModal() {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Email</label><input id="amEmail" type="email" placeholder="email@lebane.app"></div>
+    </div>
+  `;
+  showModal('Agregar AM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doAddAm()">Guardar</button>
+  `);
+}
+
+function doAddAm() {
+  const email = document.getElementById('amEmail').value.trim();
+
+  if (!email) {
+    showToast('Completá el email del AM', true);
+    return;
+  }
+
+  apiCall('addAm', { email: email }, function() {
+    closeModal();
+    openAmManager();
+  });
+}
+
+function editAmModal(amEmail) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Email</label><input id="amEmail" type="email" value="${amEmail}"></div>
+    </div>
+  `;
+  showModal('Editar AM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doEditAm('${amEmail}')">Guardar</button>
+  `);
+}
+
+function doEditAm(oldEmail) {
+  const newEmail = document.getElementById('amEmail').value.trim();
+
+  if (!newEmail) {
+    showToast('Completá el email del AM', true);
+    return;
+  }
+
+  apiCall('editAm', { oldEmail: oldEmail, newEmail: newEmail }, function() {
+    closeModal();
+    openAmManager();
+  });
+}
+
+function toggleAmStatus(amEmail, active) {
+  apiCall('toggleAmActive', { am: amEmail, active: active }, function() {
+    openAmManager();
+  });
+}
+
+function doDeleteAm(amEmail) {
+  if (confirm('¿Eliminar AM ' + amEmail + '?')) {
+    apiCall('deleteAm', { am: amEmail }, function() {
+      openAmManager();
+    });
+  }
 }
 
 function openUnmatchedModal() {
