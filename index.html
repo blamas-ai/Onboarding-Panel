@@ -452,8 +452,8 @@ function testData() {
 }
 
 function apiCall(action, payload, callback) {
-  const data = { action: action, ...payload };
-  
+  const data = { action: action, payload: payload };
+
   fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
