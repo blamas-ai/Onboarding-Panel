@@ -123,6 +123,7 @@ function apiRouter(action, payload) {
       case 'ignoreUnmatchedResponses': result = ignoreUnmatchedResponses(payload.responseIds || payload.ids || []); break;
       case 'moveToDiscovery':         result = moveToDiscovery(payload.id || payload.clientId || payload); break;
       case 'moveToCalendar':          result = moveToCalendar(payload.id || payload.clientId || payload); break;
+      case 'validatePaymentsAmAssignment': result = validatePaymentsAmAssignment(); break;
       case 'getOmList':               result = getOmList(); break;
       case 'toggleOmActive':          result = toggleOmActive(payload.om, payload.active); break;
       case 'addOm':                   result = addOm(payload); break;
@@ -1439,6 +1440,63 @@ function moveToCalendar(id) {
   return {
     ok: true,
     message: client['Empresa'] + ' movido a Calendario. Ya podés enviarle el link de agenda.'
+  };
+}
+
+/**
+ * Revalida la asignación de AM para todos los clientes en Calendario.
+ * Lógica:
+ * - Si Revenue >= 8000 Y Payments = SI → debe tener AM (si no lo tiene, asigna)
+ * - Si Revenue < 8000 O Payments != SI → NO debe tener AM (si lo tiene, lo remueve)
+ */
+function validatePaymentsAmAssignment() {
+  var ss = getMainSpreadsheet_();
+  var sh = ss.getSheetByName(LEBANE.sheets.clients);
+  if (!sh) return { ok: false, message: 'No se encontró la hoja Clientes y etapas.' };
+
+  var values = sh.getDataRange().getValues();
+  var headers = values[0].map(function(h){ return String(h||'').trim(); });
+  var etapaIdx = headers.indexOf('Etapa');
+  var revenueIdx = headers.indexOf('Revenue');
+  var paymentsIdx = headers.indexOf('Payments');
+  var amIdx = headers.indexOf('AM');
+
+  if (etapaIdx < 0 || revenueIdx < 0 || paymentsIdx < 0 || amIdx < 0) {
+    return { ok: false, message: 'Faltan columnas requeridas.' };
+  }
+
+  var map = getHeaderMap_(sh);
+  var changes = { assigned: 0, removed: 0, total: 0 };
+
+  for (var i = 1; i < values.length; i++) {
+    var etapa = String(values[i][etapaIdx] || '').trim();
+    if (etapa !== 'Calendario') continue;
+
+    changes.total++;
+    var revenue = Number(values[i][revenueIdx] || 0);
+    var payments = String(values[i][paymentsIdx] || '').trim();
+    var am = String(values[i][amIdx] || '').trim();
+
+    var shouldHaveAm = (revenue >= 8000) && (payments === 'SI');
+
+    if (shouldHaveAm && !am) {
+      // Asignar AM
+      var newAm = nextRoundRobin_('AM', LEBANE.am);
+      sh.getRange(i + 1, amIdx + 1).setValue(newAm);
+      changes.assigned++;
+    } else if (!shouldHaveAm && am) {
+      // Remover AM
+      sh.getRange(i + 1, amIdx + 1).setValue('');
+      changes.removed++;
+    }
+  }
+
+  SpreadsheetApp.flush();
+  invalidateUiCache_();
+
+  return {
+    ok: true,
+    message: 'Validación completada. AMs asignados: ' + changes.assigned + ' · AMs removidos: ' + changes.removed + ' · Total en Calendario: ' + changes.total
   };
 }
 

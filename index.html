@@ -371,6 +371,7 @@ function renderDashboard(container) {
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;">
           <button class="btn primary" onclick="openAddModal()">➕ Nuevo cliente</button>
           <button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>
+          <button class="btn" onclick="validateAmAssignment()" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">🔄 Validar AMs</button>
           <button class="btn" onclick="openOmManager()">👥 Gestionar OMs</button>
           <button class="btn" onclick="openAmManager()">👤 Gestionar AMs</button>
         </div>
@@ -926,6 +927,22 @@ function syncNow() {
 
 function exportCSV() {
   alert('Exportar CSV (implementar)');
+}
+
+function validateAmAssignment() {
+  if (!confirm('¿Revalidar asignación de AMs en Calendario?\n\nSe asignarán/removerán AMs según: Revenue >= 8000 Y Payments = SI')) {
+    return;
+  }
+
+  showToast('Validando asignación de AMs...');
+  apiCall('validatePaymentsAmAssignment', {}, function(result) {
+    if (result.ok) {
+      showToast('✅ ' + result.message);
+      loadData();
+    } else {
+      showToast('❌ ' + result.message, true);
+    }
+  });
 }
 
 /* ======= UI ======= */
