@@ -97,6 +97,7 @@ function apiRouter(action, payload) {
     switch (action) {
       case 'getAppData':              result = getAppData(payload); break;
       case 'getPipelineData':          result = getPipelineData(); break;
+      case 'getStageData':             result = getStageData(payload.stage); break;
       case 'getCalendarData':          result = getCalendarData(); break;
       case 'getHistoryData':           result = getHistoryData(); break;
       case 'getPanelHealth':           result = getPanelHealth(); break;
