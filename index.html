@@ -741,8 +741,12 @@ function doEditOm(oldName) {
 }
 
 function toggleOmStatus(omName, active) {
-  apiCall('toggleOmActive', { om: omName, active: active }, function() {
-    openOmManager();
+  apiCall('toggleOmActive', { om: omName, active: active }, function(result) {
+    if (result.ok) {
+      setTimeout(() => openOmManager(), 300);
+    } else {
+      showToast('Error: ' + result.message, true);
+    }
   });
 }
 
@@ -857,8 +861,12 @@ function doEditAm(oldEmail) {
 }
 
 function toggleAmStatus(amEmail, active) {
-  apiCall('toggleAmActive', { am: amEmail, active: active }, function() {
-    openAmManager();
+  apiCall('toggleAmActive', { am: amEmail, active: active }, function(result) {
+    if (result.ok) {
+      setTimeout(() => openAmManager(), 300);
+    } else {
+      showToast('Error: ' + result.message, true);
+    }
   });
 }
 
