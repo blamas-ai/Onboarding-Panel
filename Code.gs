@@ -292,6 +292,7 @@ function seedConfig_() {
     ['FORM_SPREADSHEET_ID', LEBANE.form.spreadsheetId],
     ['FORM_GID', String(LEBANE.form.gid)],
     ['FORM_URL', LEBANE.form.publicFormUrl],
+    ['DISCOVERY_LUMA_LINK', 'https://luma.com/calendar/cal-FvOcKZEh3CGtvua'],
     ['MAIL_FROM_NAME', 'Equipo Lebane'],
     ['CC_IMPLEMENTACIONES', 'implementaciones@lebane.app']
   ];
@@ -1477,7 +1478,7 @@ function saveAndSendDiscovery(data) {
   if (!id) throw new Error('Falta ID del cliente.');
 
   var fechaRaw = clean_(data.fecha);
-  var link = clean_(data.link);
+  var link = clean_(data.link) || getConfig_('DISCOVERY_LUMA_LINK') || '';
 
   if (!fechaRaw) throw new Error('Falta fecha de la sesión.');
   if (!link) throw new Error('Falta link de la reunión.');
