@@ -515,9 +515,13 @@ function openAddModal() {
     </div>
   `;
   showModal('Agregar cliente', modal, `
-    <button class="btn" onclick="closeModal()">Cancelar</button>
-    <button class="btn primary" onclick="doAddClient()">Guardar</button>
+    <button class="btn" id="btnCancelAdd">Cancelar</button>
+    <button class="btn primary" id="btnSaveAdd">Guardar</button>
   `);
+
+  // Agregar event listeners después de inyectar el HTML
+  document.getElementById('btnCancelAdd').addEventListener('click', closeModal);
+  document.getElementById('btnSaveAdd').addEventListener('click', doAddClient);
 }
 
 function doAddClient() {
