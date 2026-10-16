@@ -416,6 +416,7 @@ function renderStage(container, stage) {
         </div>
         <div class="cardActions">
           <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
+          <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP (${c.fupBienvenida || 0}/${c.fupDiscovery || 0}/${c.fupCalendario || 0})</button>
           ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
           ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
           ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
