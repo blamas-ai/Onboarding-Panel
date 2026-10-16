@@ -1657,7 +1657,13 @@ function sendCalendarEmail(id) {
     om = nextRoundRobin_('OM', LEBANE.om);
     if (map['OM']) sh.getRange(row, map['OM']).setValue(om);
   }
-  if (!am) {
+
+  // Asignar AM solo si: Revenue >= 8000 Y Payments = SI
+  var revenue = Number(client['Revenue'] || 0);
+  var payments = String(client['Payments'] || '').trim();
+  var shouldAssignAm = (revenue >= 8000) && (payments === 'SI');
+
+  if (!am && shouldAssignAm) {
     am = nextRoundRobin_('AM', LEBANE.am);
     if (map['AM']) sh.getRange(row, map['AM']).setValue(am);
   }
@@ -3352,8 +3358,10 @@ function calendarEmailHtml_(empresa, om, am, calendarLink) {
     + '<div style="height:1px;background:#E8EDF5;margin:0 0 14px;"></div>'
     + '<div style="text-align:center;">'
     + '<div style="font-size:11px;font-weight:800;color:#7B8494;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Account Manager</div>'
-    + '<div style="font-size:15px;font-weight:800;color:#111827;margin-bottom:4px;">' + escapeHtml_(amName || am) + '</div>'
-    + (am ? '<a href="mailto:' + escapeHtml_(am) + '" style="font-size:13px;color:#125BFF;text-decoration:none;font-weight:700;">' + escapeHtml_(am) + '</a>' : '')
+    + (am
+      ? '<div style="font-size:15px;font-weight:800;color:#111827;margin-bottom:4px;">' + escapeHtml_(amName || am) + '</div>'
+        + '<a href="mailto:' + escapeHtml_(am) + '" style="font-size:13px;color:#125BFF;text-decoration:none;font-weight:700;">' + escapeHtml_(am) + '</a>'
+      : '<div style="font-size:14px;color:#6B7280;">A definirse según el plan de implementación</div>')
     + '</div>'
     + '</div>'
 
