@@ -639,14 +639,14 @@ function openOmManager() {
       return;
     }
 
-    const oms = result.oms || [];
+    const oms = result.list || [];
     let tbody = '';
     oms.forEach(om => {
       const statusBadge = om.active ? '✅ Activo' : '❌ Inactivo';
       tbody += `
         <tr>
           <td>${om.name || '—'}</td>
-          <td>${om.calendarLink ? '<a href="' + om.calendarLink + '" target="_blank">Ver →</a>' : '—'}</td>
+          <td>${om.calendar ? '<a href="' + om.calendar + '" target="_blank">Ver →</a>' : '—'}</td>
           <td>${statusBadge}</td>
           <td style="display:flex; gap:5px; font-size:12px;">
             <button class="btn small" onclick="editOmModal('${om.name}')">✏️</button>
@@ -761,7 +761,7 @@ function openAmManager() {
       return;
     }
 
-    const ams = result.ams || [];
+    const ams = result.list || [];
     let tbody = '';
     ams.forEach(am => {
       const statusBadge = am.active ? '✅ Activo' : '❌ Inactivo';
