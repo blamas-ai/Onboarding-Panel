@@ -419,6 +419,7 @@ function renderStage(container, stage) {
           <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP ${c.etapa === 'Bienvenida' ? '(' + (c.fupBienvenida || 0) + ')' : c.etapa === 'Discovery' ? '(' + (c.fupDiscovery || 0) + ')' : c.etapa === 'Calendario' ? '(' + (c.fupCalendario || 0) + ')' : '(0)'}</button>
           ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
           ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
+          ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
           ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
         </div>
       </div>
