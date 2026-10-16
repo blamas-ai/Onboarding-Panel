@@ -120,7 +120,7 @@
     .clientList { display:grid; gap:12px; }
     .clientCard {
       background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px;
-      box-shadow:0 5px 14px rgba(17,24,39,.04); transition:.12s ease;
+      box-shadow:0 5px 14px rgba(17,24,39,.04); transition:.12s ease; position:relative;
     }
     .clientCard:hover { box-shadow:0 8px 22px rgba(17,24,39,.08); }
     .cardHeader { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
@@ -132,6 +132,7 @@
     .mailBadge { display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; }
     .mailBadge.sent { background:#dcfce7; color:#166534; }
     .mailBadge.pending { background:#fee2e2; color:#991b1b; }
+    .newBadge { position:absolute; top:10px; right:10px; background:#667eea; color:#fff; padding:4px 10px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
     .empty {
       border:2px dashed var(--border); background:var(--bg); border-radius:14px;
       padding:40px; text-align:center; color:var(--muted);
@@ -394,6 +395,7 @@ function renderStage(container, stage) {
     }
     container.innerHTML = '<div class="clientList">' + clients.map(c => `
       <div class="clientCard">
+        ${c.isNewStage ? '<div class="newBadge">🆕 New</div>' : ''}
         <div class="cardHeader">
           <div>
             <div class="clientTitle">${c.empresa || '—'}</div>
