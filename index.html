@@ -114,6 +114,7 @@
     .stageCard.welcome { background:var(--blue-soft); }
     .stageCard.discovery { background:var(--yellow); }
     .stageCard.calendar { background:var(--green); }
+    .stageCard.payments { background:#a78bfa; color:#fff; }
     .stageCard.historic { background:var(--gray); }
 
     /* CLIENT LIST */
@@ -269,6 +270,7 @@
     <button class="tab" onclick="switchTab('bienvenida')">📧 Bienvenida</button>
     <button class="tab" onclick="switchTab('discovery')">🔍 Discovery</button>
     <button class="tab" onclick="switchTab('calendario')">📅 Calendario</button>
+    <button class="tab" onclick="switchTab('payments')">💳 Payments</button>
     <button class="tab" onclick="switchTab('historico')">✅ Histórico</button>
   </div>
 
@@ -314,7 +316,7 @@ function renderContent() {
 
   if (currentTab === 'dashboard') {
     renderDashboard(content);
-  } else if (['bienvenida','discovery','calendario','historico'].includes(currentTab)) {
+  } else if (['bienvenida','discovery','calendario','payments','historico'].includes(currentTab)) {
     renderStage(content, currentTab);
   }
 }
@@ -356,6 +358,12 @@ function renderDashboard(container) {
           <p>agenda pendiente</p>
           ${renderCompanies('Calendario')}
         </div>
+        <div class="stageCard payments">
+          <h3>Payments</h3>
+          <div class="num">${h.payments || 0}</div>
+          <p>pagos pendientes</p>
+          ${renderCompanies('Payments')}
+        </div>
         <div class="stageCard historic">
           <h3>Histórico</h3>
           <div class="num">${h.historico || 0}</div>
@@ -378,12 +386,15 @@ function renderDashboard(container) {
 }
 
 function renderStage(container, stage) {
-  const stageMap = { bienvenida: 'Bienvenida', discovery: 'Discovery', calendario: 'Calendario', historico: 'Histórico' };
+  const stageMap = { bienvenida: 'Bienvenida', discovery: 'Discovery', calendario: 'Calendario', payments: 'Payments', historico: 'Histórico' };
   const stageName = stageMap[stage];
 
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando ' + stageName.toLowerCase() + '...</p></div>';
 
-  apiCall('getStageData', { stage: stageName }, function(result) {
+  const action = (stage === 'payments') ? 'getPaymentsData' : 'getStageData';
+  const payload = (stage === 'payments') ? {} : { stage: stageName };
+
+  apiCall(action, payload, function(result) {
     if (!result.ok) {
       container.innerHTML = '<div class="empty">Error: ' + (result.message || 'Error al cargar') + '</div>';
       return;
@@ -421,6 +432,7 @@ function renderStage(container, stage) {
           ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
           ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
           ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
+          ${stage === 'payments' ? '<button class="btn small" onclick="apiCall(\'completeClient\',{id:\''+c.id+'\'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅ Pasar a Histórico</button>' : ''}
         </div>
       </div>
     `).join('') + '</div>';

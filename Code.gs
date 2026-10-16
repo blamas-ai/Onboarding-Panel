@@ -98,6 +98,7 @@ function apiRouter(action, payload) {
       case 'getAppData':              result = getAppData(payload); break;
       case 'getPipelineData':          result = getPipelineData(); break;
       case 'getStageData':             result = getStageData(payload.stage); break;
+      case 'getPaymentsData':          result = getPaymentsData(); break;
       case 'getCalendarData':          result = getCalendarData(); break;
       case 'getHistoryData':           result = getHistoryData(); break;
       case 'getPanelHealth':           result = getPanelHealth(); break;
@@ -558,7 +559,7 @@ function getAppData(filters) {
  ****************************************************/
 function buildPipelineData_() {
   try {
-    var grouped = { Bienvenida: [], Discovery: [], Calendario: [] };
+    var grouped = { Bienvenida: [], Discovery: [], Calendario: [], Payments: [] };
     var allClients = [];
     var ss = getMainSpreadsheet_();
     var sh = ss.getSheetByName(LEBANE.sheets.clients);
@@ -606,6 +607,7 @@ function buildPipelineData_() {
         bienvenida: grouped.Bienvenida.length,
         discovery: grouped.Discovery.length,
         calendario: grouped.Calendario.length,
+        payments: grouped.Payments.length,
         historico: historicoCount,
         unmatched: unmatched.length
       },
@@ -674,6 +676,52 @@ function getStageData(stage) {
   var data = {
     ok: true,
     stage: stage,
+    clients: clients,
+    count: clients.length
+  };
+
+  putUiCache_(cacheKey, data, 90);
+  return data;
+}
+
+/**
+ * Carga clientes con Payments = SI (pendientes de procesar pagos)
+ * Estos clientes están listos para pasar a Histórico una vez procesados
+ */
+function getPaymentsData() {
+  var cacheKey = 'payments_data';
+  var cached = getUiCache_(cacheKey);
+  if (cached) return cached;
+
+  var sh = getMainSpreadsheet_().getSheetByName(LEBANE.sheets.clients);
+  var clients = [];
+
+  if (sh && sh.getLastRow() >= 2) {
+    var values  = sh.getDataRange().getValues();
+    var headers = values[0].map(function(h){ return String(h||'').trim(); });
+    var empIdx  = headers.indexOf('Empresa');
+    var paymentsIdx = headers.indexOf('Payments');
+
+    for (var i = 1; i < values.length; i++) {
+      var empresa = String(empIdx >= 0 ? values[i][empIdx] : '').trim();
+      if (!empresa) continue;
+
+      var payments = String(paymentsIdx >= 0 ? values[i][paymentsIdx] : '').trim();
+      if (payments !== 'SI') continue;
+
+      var obj = {};
+      headers.forEach(function(h, idx){ obj[h] = values[i][idx]; });
+      obj.__row = i + 1;
+      if (!obj['Etapa']) obj['Etapa'] = 'Payments';
+
+      var client = normalizeClientForUi_(obj);
+      clients.push(client);
+    }
+  }
+
+  var data = {
+    ok: true,
+    stage: 'Payments',
     clients: clients,
     count: clients.length
   };
@@ -1789,8 +1837,23 @@ function confirmMeeting(data) {
   setCalendarStatus_(client['ID'], 'Agendada', '');
 
   // Paso interno: no envía mail.
-  // Una vez registrada la reunión, pasa a Histórico.
-  archiveClientAfterMeetingScheduled_(found, client);
+  // Si Payments = SI, el cliente va a Payments, no a Histórico.
+  // De lo contrario, pasa inmediatamente a Histórico.
+  var payments = String(client['Payments'] || '').trim();
+  var destination = 'Histórico';
+
+  if (payments === 'SI') {
+    // El cliente queda en la hoja Clientes y etapas pero con etapa "Payments"
+    destination = 'Payments';
+
+    // Actualizar la etapa a "Payments"
+    var map = getHeaderMap_(sh);
+    sh.getRange(row, map['Etapa']).setValue('Payments');
+    SpreadsheetApp.flush();
+  } else {
+    // Archiva el cliente normalmente a Histórico
+    archiveClientAfterMeetingScheduled_(found, client);
+  }
 
   invalidateUiCache_();
 
@@ -1799,7 +1862,7 @@ function confirmMeeting(data) {
     message:
       'Reunión registrada para ' +
       formatDate_(fecha) +
-      '. Cliente movido a Histórico.'
+      '. Cliente movido a ' + destination + '.'
   };
 }
 
