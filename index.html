@@ -521,17 +521,31 @@ function openAddModal() {
 }
 
 function doAddClient() {
+  const empresa = document.getElementById('empresa').value.trim();
+  const mails = document.getElementById('mails').value.trim();
+
+  if (!empresa) {
+    showToast('Completá el campo Empresa', true);
+    return;
+  }
+  if (!mails) {
+    showToast('Completá el campo Mails', true);
+    return;
+  }
+
   const data = {
-    empresa: document.getElementById('empresa').value,
-    mails: document.getElementById('mails').value,
-    revenue: document.getElementById('revenue').value,
+    empresa: empresa,
+    mails: mails,
+    revenue: document.getElementById('revenue').value.trim(),
     om: document.getElementById('om').value || '',
     am: document.getElementById('am').value || '',
     reimplementado: document.getElementById('reimplementado').value,
     payments: document.getElementById('payments').value,
     sendWelcomeNow: document.getElementById('sendWelcomeNow').checked,
-    observaciones: document.getElementById('observaciones').value
+    observaciones: document.getElementById('observaciones').value.trim()
   };
+
+  console.log('Enviando datos:', data);
   apiCall('addClient', data, function() { closeModal(); loadData(); });
 }
 
