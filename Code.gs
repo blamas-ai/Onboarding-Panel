@@ -1965,13 +1965,14 @@ function archiveClientAfterMeetingScheduled_(found, client) {
 
 function archiveClient_(found, client, calendarStatus, auditDetail) {
   var histSheet   = getSheet_(LEBANE.sheets.history);
-  var histHeaders = getHeaders_(histSheet);
+  var histMap     = getHeaderMap_(histSheet);
   var empresa     = client['Empresa'] || '';
   var totalFup = Number(client['FUP Bienvenida']||0)
     + Number(client['FUP Discovery']||0)
     + Number(client['FUP Calendario']||0);
 
-  appendObject_(histSheet, histHeaders, {
+  // PASO 1: Crear objeto con datos
+  var obj = {
     'ID': client['ID'],
     'Empresa': empresa,
     'Mails': client['Mails'],
@@ -1999,7 +2000,10 @@ function archiveClient_(found, client, calendarStatus, auditDetail) {
     'FUP Total': totalFup,
     'Observaciones': client['Observaciones'],
     'Comentarios Internos': client['Comentarios Internos']
-  });
+  };
+
+  // PASO 2: Agregar fila usando header map (sin depender del orden de columnas)
+  appendObjectWithMap_(histSheet, histMap, obj);
 
   setCalendarStatus_(client['ID'], calendarStatus || 'Completado', calendarStatus === 'Completado' ? new Date() : '');
 
@@ -2011,6 +2015,25 @@ function archiveClient_(found, client, calendarStatus, auditDetail) {
   invalidateUiCache_();
 
   return { ok: true };
+}
+
+/****************************************************
+ * appendObjectWithMap_()
+ * Agrega una fila usando header map, sin depender del orden de columnas
+ ****************************************************/
+function appendObjectWithMap_(sh, headerMap, obj) {
+  if (!sh || !headerMap || !obj) return;
+
+  var lastRow = sh.getLastRow();
+  var newRow = lastRow + 1;
+
+  // Para cada columna en el objeto, asignar el valor a la columna correcta
+  Object.keys(obj).forEach(function(key) {
+    if (headerMap[key]) {
+      var colIndex = headerMap[key];
+      sh.getRange(newRow, colIndex).setValue(obj[key]);
+    }
+  });
 }
 
 function setCalendarStatus_(id, status, completedAt) {
