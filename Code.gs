@@ -172,7 +172,7 @@ function setupOnboardingSystem() {
     'Fecha Reunión','Link Reunión',
     'Fecha Ingreso Etapa','Última Actualización',
     'FUP Bienvenida','FUP Discovery','FUP Calendario',
-    'Observaciones','Comentarios Internos','Payments'
+    'Observaciones','Comentarios Internos','Payments','LOSA'
   ]);
 
   ensureSheet_(ss, LEBANE.sheets.calendar, [
