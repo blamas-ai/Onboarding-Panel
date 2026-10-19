@@ -463,6 +463,7 @@ function renderStage(container, stage) {
             ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
             ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
             ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
+            ${stage === 'calendario' ? '<button class="btn small" onclick="apiCall(\'sendCalendarEmail\',{id:\''+c.id+'\'},loadData)">📧 Enviar Calendario</button>' : ''}
             ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
           </div>
         </div>
