@@ -410,7 +410,7 @@ function renderStage(container, stage) {
             <td>${c.am || '—'}</td>
             <td>${c.fecha || '—'}</td>
             <td style="display:flex; gap:5px; font-size:12px;">
-              <button class="btn small" onclick="openProfile('${c.id}')">👁️</button>
+              <button class="btn small" onclick="openFormResponses('${c.id}', '${c.empresa}', '${c.linkRespuestas || ''}')" title="Ver respuestas del formulario">👁️</button>
               <button class="btn small" onclick="apiCall('completeClient',{id:'${c.id}'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅</button>
             </td>
           </tr>
@@ -605,6 +605,44 @@ function saveLegalization(id) {
     closeModal();
     loadData();
     showToast('Legalización guardada');
+  });
+}
+
+function openFormResponses(id, empresa, linkRespuestas) {
+  if (!linkRespuestas) {
+    showToast('No hay respuestas del formulario para esta empresa', true);
+    return;
+  }
+
+  apiCall('getFormResponseDetails', { clientId: id }, function(result) {
+    if (!result.ok || !result.responses) {
+      showToast('No hay respuestas disponibles', true);
+      return;
+    }
+
+    const responses = result.responses;
+    const modal = `
+      <div style="display:grid; gap:16px; max-height:400px; overflow-y:auto;">
+        <div style="border-bottom:2px solid #e5e7eb; padding-bottom:12px;">
+          <p style="margin:0; font-size:14px; color:#6b7280;">
+            <strong>Empresa:</strong> ${empresa}
+          </p>
+          <p style="margin:8px 0 0; font-size:12px; color:#9ca3af;">
+            <a href="${linkRespuestas}" target="_blank" style="color:#3b82f6;">Ver respuestas completas →</a>
+          </p>
+        </div>
+        ${responses.map(r => `
+          <div style="border-left:3px solid #3b82f6; padding-left:12px;">
+            <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#111827;">${r.pregunta || 'Pregunta'}</p>
+            <p style="margin:0; font-size:13px; color:#374151;">${r.respuesta || 'Sin respuesta'}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    showModal('Respuestas del formulario: ' + empresa, modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
   });
 }
 
