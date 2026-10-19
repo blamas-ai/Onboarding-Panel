@@ -1901,16 +1901,17 @@ function confirmMeeting(data) {
   setCalendarStatus_(client['ID'], 'Agendada', '');
 
   // Paso interno: no envía mail.
-  // Si Payments = SI, el cliente va a Payments, no a Histórico.
-  // De lo contrario, pasa inmediatamente a Histórico.
+  // Registrar en solapa Payments si Payments = SI
+  // SIEMPRE archivar a Histórico (etapa)
   var payments = String(client['Payments'] || '').trim();
-  var destination = 'Histórico';
 
-  if (payments !== 'SI') {
-    // Solo archiva a Histórico si Payments != SI
-    archiveClientAfterMeetingScheduled_(found, client);
+  if (payments === 'SI') {
+    // Copiar a solapa Payments si aplica
+    upsertPayments_(client);
   }
-  // Si Payments = SI, queda en Calendario pero visible en solapa Payments
+
+  // SIEMPRE archivar a Histórico, independientemente de Payments
+  archiveClientAfterMeetingScheduled_(found, client);
 
   invalidateUiCache_();
 
@@ -2064,6 +2065,67 @@ function upsertCalendar_(client, explicitFechaReunion) {
       if (map[key]) sh.getRange(existing, map[key]).setValue(obj[key]);
     });
   } else {
+    appendObject_(sh, headers, obj);
+  }
+}
+
+/****************************************************
+ * PASO 1: upsertPayments_()
+ * Copia datos a solapa Payments cuando se registra reunión
+ * y el cliente tiene Payments = SI
+ ****************************************************/
+function upsertPayments_(client) {
+  var sh = getSheet_(LEBANE.sheets.payments);
+  if (!sh) return; // Solapa Payments no existe
+
+  var headers = getHeaders_(sh);
+  var map = getHeaderMap_(sh);
+  var id = client['ID'];
+
+  var existing = findRowByValue_(sh, 'ID', id);
+
+  var obj = {
+    'ID': id,
+    'Empresa': client['Empresa'],
+    'Mails': client['Mails'],
+    'Revenue': client['Revenue'] || '',
+    'Fecha Ingreso': client['Fecha Ingreso'] || '',
+    'Reimplementado': client['Reimplementado'] || 'NO',
+    'Etapa': client['Etapa'] || '',
+    'Estado': client['Estado'] || '',
+    'OM': client['OM'] || '',
+    'AM': client['AM'] || '',
+    'Mail Bienvenida Enviado': client['Mail Bienvenida Enviado'] || 'NO',
+    'Fecha Envío Bienvenida': client['Fecha Envío Bienvenida'] || '',
+    'Fecha Programada Bienvenida': client['Fecha Programada Bienvenida'] || '',
+    'Respondió Form': client['Respondió Form'] || 'NO',
+    'Link Respuestas': client['Link Respuestas'] || '',
+    'ID Respuesta Form': client['ID Respuesta Form'] || '',
+    'Mail Discovery Enviado': client['Mail Discovery Enviado'] || 'NO',
+    'Fecha Envío Discovery': client['Fecha Envío Discovery'] || '',
+    'Fecha Discovery': client['Fecha Discovery'] || '',
+    'Link Discovery': client['Link Discovery'] || '',
+    'Asistió Discovery': client['Asistió Discovery'] || 'NO',
+    'Mail Calendario Enviado': client['Mail Calendario Enviado'] || 'NO',
+    'Fecha Envío Calendario': client['Fecha Envío Calendario'] || '',
+    'Fecha Reunión': client['Fecha Reunión'] || '',
+    'Link Reunión': client['Link Reunión'] || '',
+    'Fecha Ingreso Etapa': client['Fecha Ingreso Etapa'] || '',
+    'Última Actualización': new Date(),
+    'FUP Bienvenida': client['FUP Bienvenida'] || 0,
+    'FUP Discovery': client['FUP Discovery'] || 0,
+    'FUP Calendario': client['FUP Calendario'] || 0,
+    'Observaciones': client['Observaciones'] || '',
+    'Comentarios Internos': client['Comentarios Internos'] || ''
+  };
+
+  if (existing) {
+    // Actualizar fila existente
+    Object.keys(obj).forEach(function(key) {
+      if (map[key]) sh.getRange(existing, map[key]).setValue(obj[key]);
+    });
+  } else {
+    // Crear nueva fila
     appendObject_(sh, headers, obj);
   }
 }
