@@ -1155,7 +1155,8 @@ function registerClient(data) {
     'Última Actualización': now,
     'FUP Bienvenida': 0, 'FUP Discovery': 0, 'FUP Calendario': 0,
     'Observaciones': clean_(data.observaciones),
-    'Comentarios Internos': clean_(data.comentarios)
+    'Comentarios Internos': clean_(data.comentarios),
+    'Payments': clean_(data.payments) || 'NO'
   };
 
   appendObject_(clientSheet, headers, rowObj);
