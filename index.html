@@ -615,12 +615,12 @@ function openFormResponses(id, empresa, linkRespuestas) {
   }
 
   apiCall('getFormResponseDetails', { clientId: id }, function(result) {
-    if (!result.ok || !result.responses) {
-      showToast('No hay respuestas disponibles', true);
+    if (!result.ok || !result.response || result.response.length === 0) {
+      showToast('No hay respuestas disponibles para esta empresa', true);
       return;
     }
 
-    const responses = result.responses;
+    const responses = result.response;
     const modal = `
       <div style="display:grid; gap:16px; max-height:400px; overflow-y:auto;">
         <div style="border-bottom:2px solid #e5e7eb; padding-bottom:12px;">
@@ -633,8 +633,8 @@ function openFormResponses(id, empresa, linkRespuestas) {
         </div>
         ${responses.map(r => `
           <div style="border-left:3px solid #3b82f6; padding-left:12px;">
-            <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#111827;">${r.pregunta || 'Pregunta'}</p>
-            <p style="margin:0; font-size:13px; color:#374151;">${r.respuesta || 'Sin respuesta'}</p>
+            <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#111827;">${r.label || r.pregunta || 'Pregunta'}</p>
+            <p style="margin:0; font-size:13px; color:#374151;">${r.value || r.respuesta || 'Sin respuesta'}</p>
           </div>
         `).join('')}
       </div>
