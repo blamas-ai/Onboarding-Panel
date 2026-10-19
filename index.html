@@ -460,7 +460,7 @@ function renderStage(container, stage) {
           </div>
           <div class="cardActions">
             <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
-            ${c.payments === 'SI' ? '<span style="display:inline-block; background:#7c3aed; color:white; padding:4px 12px; border-radius:4px; font-size:11px; font-weight:700; margin-left:8px;">🎯 Lebalización</span>' : ''}
+            ${(c.payments === 'SI' || c.losa === 'SI') ? '<span style="display:inline-block; background:#7c3aed; color:white; padding:4px 12px; border-radius:4px; font-size:11px; font-weight:700; margin-left:8px;">🎯 Lebalización</span>' : ''}
             <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP ${c.etapa === 'Bienvenida' ? '(' + (c.fupBienvenida || 0) + ')' : c.etapa === 'Discovery' ? '(' + (c.fupDiscovery || 0) + ')' : c.etapa === 'Calendario' ? '(' + (c.fupCalendario || 0) + ')' : '(0)'}</button>
             ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
             ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}

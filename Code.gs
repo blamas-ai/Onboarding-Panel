@@ -1195,6 +1195,7 @@ function addClient(data) {
   var id          = Utilities.getUuid();
   var now         = new Date();
   var payments    = normalizeYesNo_(data.payments, 'NO');
+  var losa        = normalizeYesNo_(data.losa, 'NO');
 
   var rowObject = {
     'ID': id, 'Empresa': empresa, 'Mails': mails,
@@ -1215,7 +1216,8 @@ function addClient(data) {
     'Fecha Ingreso Etapa': now, 'Última Actualización': now,
     'FUP Bienvenida': 0, 'FUP Discovery': 0, 'FUP Calendario': 0,
     'Observaciones': clean_(data.observaciones), 'Comentarios Internos': '',
-    'Payments': payments
+    'Payments': payments,
+    'LOSA': losa
   };
 
   appendObject_(clientSheet, headers, rowObject);
