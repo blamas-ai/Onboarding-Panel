@@ -4476,31 +4476,47 @@ function findDocumentByCompanyName(empresaNombre) {
     return { ok: false, message: 'Carpeta no encontrada' };
   }
 
-  // Busca archivos que contengan el nombre de la empresa
-  var files = folder.getFilesByName(empresaNombre);
-
-  if (files.hasNext()) {
-    var file = files.next();
-    return {
-      ok: true,
-      found: true,
-      nombre: file.getName(),
-      url: file.getUrl(),
-      id: file.getId()
-    };
-  }
-
-  // Si no encuentra con nombre exacto, busca archivos que contengan el nombre
-  var allFiles = folder.getFiles();
   var resultados = [];
 
+  // Busca carpetas que contengan el nombre de la empresa (búsqueda exacta primero)
+  var subfolder = folder.getFoldersByName(empresaNombre);
+  if (subfolder.hasNext()) {
+    var carpeta = subfolder.next();
+    resultados.push({
+      nombre: carpeta.getName(),
+      url: carpeta.getUrl(),
+      id: carpeta.getId(),
+      tipo: 'carpeta'
+    });
+  }
+
+  // Busca carpetas con búsqueda parcial
+  var allFolders = folder.getFolders();
+  while (allFolders.hasNext()) {
+    var carpeta = allFolders.next();
+    if (carpeta.getName().toLowerCase().includes(empresaNombre.toLowerCase())) {
+      var exists = resultados.some(function(r) { return r.id === carpeta.getId(); });
+      if (!exists) {
+        resultados.push({
+          nombre: carpeta.getName(),
+          url: carpeta.getUrl(),
+          id: carpeta.getId(),
+          tipo: 'carpeta'
+        });
+      }
+    }
+  }
+
+  // Busca archivos que contengan el nombre
+  var allFiles = folder.getFiles();
   while (allFiles.hasNext()) {
     var file = allFiles.next();
     if (file.getName().toLowerCase().includes(empresaNombre.toLowerCase())) {
       resultados.push({
         nombre: file.getName(),
         url: file.getUrl(),
-        id: file.getId()
+        id: file.getId(),
+        tipo: 'archivo'
       });
     }
   }
@@ -4511,7 +4527,8 @@ function findDocumentByCompanyName(empresaNombre) {
       found: true,
       multiple: resultados.length > 1,
       resultados: resultados,
-      url: resultados[0].url
+      url: resultados[0].url,
+      nombre: resultados[0].nombre
     };
   }
 
