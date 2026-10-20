@@ -125,7 +125,8 @@ function apiRouter(action, payload) {
       case 'moveToCalendar':          result = moveToCalendar(payload.id || payload.clientId || payload); break;
       case 'validatePaymentsAmAssignment': result = validatePaymentsAmAssignment(); break;
       case 'syncAllPaymentsClients':  result = syncAllPaymentsClients(); break;
-      case 'findDocumentByCompanyName': result = findDocumentByCompanyName(payload.empresa || payload); break;
+      case 'findDocumentByCompanyName': result = findDocumentByCompanyName(payload); break;
+      case 'saveDocumentLink':          result = saveDocumentLink(payload); break;
       case 'getOmList':               result = getOmList(); break;
       case 'toggleOmActive':          result = toggleOmActive(payload.om, payload.active); break;
       case 'addOm':                   result = addOm(payload); break;
@@ -4535,6 +4536,37 @@ function findDocumentByCompanyName(payload) {
   } catch (err) {
     Logger.log('Error en findDocumentByCompanyName: ' + err.toString());
     return { ok: false, message: 'Error en búsqueda: ' + err.toString() };
+  }
+}
+
+function saveDocumentLink(payload) {
+  try {
+    var clientId = payload.id;
+    var documentUrl = payload.url;
+    var ss = getMainSpreadsheet_();
+    var paymentsSheet = ss.getSheetByName(LEBANE.sheets.payments);
+
+    if (!paymentsSheet) {
+      return { ok: false, message: 'Hoja Payments no encontrada' };
+    }
+
+    var headers = getHeaders_(paymentsSheet);
+    var linkColIdx = headers.indexOf('Link Documento');
+
+    if (linkColIdx === -1) {
+      return { ok: false, message: 'Columna Link Documento no encontrada' };
+    }
+
+    var row = findRowByValue_(paymentsSheet, 'ID', clientId);
+    if (row) {
+      paymentsSheet.getRange(row, linkColIdx + 1).setValue(documentUrl);
+      return { ok: true, message: 'Link guardado' };
+    }
+
+    return { ok: false, message: 'Cliente no encontrado' };
+  } catch (err) {
+    Logger.log('Error en saveDocumentLink: ' + err.toString());
+    return { ok: false, message: 'Error al guardar: ' + err.toString() };
   }
 }
 
