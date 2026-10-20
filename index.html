@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Onboarding Lebane</title>
+  <style>
+    :root {
+      --blue:#125BFF; --blue-soft:#EAF1FF; --yellow:#FFF7D6; --green:#EAF7EF;
+      --gray:#F4F5F7; --red:#EF4444; --red-soft:#FEF2F2; --orange:#F59E0B;
+      --text:#111827; --muted:#6B7280; --border:#E5E7EB; --bg:#F8FAFC; --white:#FFFFFF;
+      --shadow:0 12px 32px rgba(17,24,39,.10);
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); font-size:14px; }
+    button,input,select,textarea { font-family:inherit; font-size:14px; }
+
+    .app { max-width:1500px; margin:0 auto; padding:18px 28px 60px; }
+
+    /* TOPBAR */
+    .topbar {
+      display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:14px;
+      padding:12px 14px; background:#fff; border:1px solid var(--border); border-radius:18px;
+      box-shadow:0 6px 20px rgba(17,24,39,.05); position:relative; z-index:20;
+    }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+    .logo { height:42px; padding:0 13px; border:1px solid var(--border); border-radius:12px;
+      background:#fff; display:flex; align-items:center; gap:9px; font-size:19px; font-weight:900;
+      letter-spacing:-.04em; box-shadow:none; flex-shrink:0; }
+    .bars { display:grid; gap:3px; }
+    .bars span { height:4px; background:var(--blue); display:block; border-radius:2px; }
+    .bars span:nth-child(1),.bars span:nth-child(2) { width:16px; }
+    .bars span:nth-child(3) { width:23px; }
+    h1 { font-size:22px; line-height:1.1; letter-spacing:-.035em; }
+    .subtitle { margin:4px 0 0; color:var(--muted); font-size:12px; }
+    .topActions { display:flex; gap:7px; align-items:center; flex-shrink:0; }
+
+    /* BUTTONS */
+    .btn {
+      border:1px solid var(--border); background:#fff; color:var(--text); border-radius:11px;
+      padding:9px 14px; font-weight:800; cursor:pointer; transition:.12s ease; white-space:nowrap; line-height:1;
+    }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(17,24,39,.09); }
+    .btn.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .btn.small { padding:6px 10px; font-size:12px; border-radius:9px; }
+    .bell { width:42px; height:42px; border-radius:11px; display:flex; align-items:center;
+      justify-content:center; font-size:18px; position:relative; }
+    .badge {
+      position:absolute; top:-6px; right:-6px; min-width:20px; height:20px; padding:0 5px;
+      border-radius:999px; background:var(--red); color:#fff; border:2px solid #fff;
+      display:none; align-items:center; justify-content:center; font-size:10px; font-weight:900;
+    }
+
+    /* SETTINGS */
+    .settingsWrap { position:relative; }
+    .settingsBtn { display:flex; align-items:center; gap:7px; }
+    .settingsMenu {
+      display:none; position:absolute; right:0; top:calc(100% + 9px); width:270px; padding:8px;
+      background:#fff; border:1px solid var(--border); border-radius:15px;
+      box-shadow:0 18px 45px rgba(17,24,39,.16); z-index:100;
+    }
+    .settingsMenu.open { display:block; }
+    .settingsItem {
+      width:100%; border:0; background:transparent; color:var(--text); cursor:pointer;
+      border-radius:10px; padding:10px 11px; display:flex; align-items:center; gap:10px;
+      text-align:left; font-weight:800;
+    }
+    .settingsItem:hover { background:var(--bg); }
+    .settingsIcon { width:22px; text-align:center; font-size:15px; flex-shrink:0; }
+    .settingsDivider { height:1px; background:var(--border); margin:6px 3px; }
+
+    /* TABS */
+    .tabBar {
+      display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; border-bottom:2px solid var(--border);
+      padding-bottom:0;
+    }
+    .tab {
+      border:none; border-bottom:3px solid transparent; border-radius:0; background:transparent;
+      padding:10px 14px; font-weight:900; cursor:pointer; color:var(--muted);
+      transition:.1s ease; position:relative; bottom:-2px;
+    }
+    .tab.active { color:var(--text); border-bottom-color:var(--blue); }
+
+    /* CONTENT */
+    .content { min-height:400px; }
+    .loading { text-align:center; padding:40px 20px; color:var(--muted); }
+    .spinner {
+      display:inline-block; width:20px; height:20px; border:3px solid var(--border);
+      border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* DASHBOARD */
+    .dashboard { display:grid; gap:20px; }
+    .stageCards { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .stageCard {
+      border:1px solid var(--border); border-radius:18px; padding:20px; cursor:pointer;
+      transition:.2s ease; text-align:center;
+    }
+    .stageCard:hover { box-shadow:0 8px 20px rgba(17,24,39,.08); transform:translateY(-2px); }
+    .stageCard h3 { margin:0 0 10px; font-size:14px; color:var(--muted); }
+    .num { font-size:42px; font-weight:950; letter-spacing:-.05em; margin:10px 0; }
+    .stageCard p { margin:0; color:var(--muted); font-size:12px; }
+    .companiesList {
+      margin-top:16px; padding-top:16px; border-top:1px solid rgba(0,0,0,.1);
+      text-align:left; font-size:12px;
+    }
+    .companiesList a {
+      display:block; margin:6px 0; color:var(--blue); text-decoration:none; cursor:pointer;
+      padding:4px 0; transition:.1s ease;
+    }
+    .companiesList a:hover { text-decoration:underline; }
+    .stageCard.welcome { background:var(--blue-soft); }
+    .stageCard.discovery { background:var(--yellow); }
+    .stageCard.calendar { background:var(--green); }
+    .stageCard.payments { background:#a78bfa; color:#fff; }
+    .stageCard.historic { background:var(--gray); }
+
+    /* CLIENT LIST */
+    .clientList { display:grid; gap:12px; }
+    .clientCard {
+      background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px;
+      box-shadow:0 5px 14px rgba(17,24,39,.04); transition:.12s ease; position:relative;
+    }
+    .clientCard:hover { box-shadow:0 8px 22px rgba(17,24,39,.08); }
+    .cardHeader { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .clientTitle { font-size:14px; font-weight:900; margin:0 0 4px; }
+    .meta { font-size:12px; color:var(--muted); line-height:1.4; }
+    .cardActions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+    .cardActions .btn { padding:7px 10px; font-size:12px; border-radius:8px; }
+    .mailStatus { display:flex; gap:8px; margin:8px 0; flex-wrap:wrap; }
+    .mailBadge { display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+    .mailBadge.sent { background:#dcfce7; color:#166534; }
+    .mailBadge.pending { background:#fee2e2; color:#991b1b; }
+    .newBadge { position:absolute; top:10px; right:10px; background:#667eea; color:#fff; padding:4px 10px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+    .empty {
+      border:2px dashed var(--border); background:var(--bg); border-radius:14px;
+      padding:40px; text-align:center; color:var(--muted);
+    }
+
+    /* ALERTS */
+    .alertStrip { display:grid; gap:8px; margin-bottom:14px; }
+    .alertCard {
+      background:#fff; border:1px solid #FECACA; border-left:4px solid var(--red);
+      border-radius:16px; padding:12px 16px; display:flex; justify-content:space-between; gap:12px;
+    }
+    .alertCard.orange { border-color:#FDE68A; border-left-color:var(--orange); }
+
+    /* FILTERS */
+    .filters {
+      background:#fff; border:1px solid var(--border); border-radius:18px; padding:14px 16px;
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px;
+      margin-bottom:14px; box-shadow:0 4px 14px rgba(17,24,39,.04);
+    }
+    label { display:block; font-size:11px; font-weight:900; margin-bottom:6px;
+      text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    input,select { width:100%; border:1px solid var(--border); border-radius:10px;
+      padding:9px 11px; outline:none; background:#fff; color:var(--text); }
+    input:focus,select:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(18,91,255,.10); }
+
+    /* MODAL */
+    .modalBack {
+      position:fixed; inset:0; background:rgba(17,24,39,.48); display:none; align-items:center;
+      justify-content:center; padding:20px; z-index:50;
+    }
+    .modal {
+      background:#fff; border-radius:22px; border:1px solid var(--border); width:min(860px,100%);
+      max-height:92vh; overflow:auto; box-shadow:var(--shadow); display:flex; flex-direction:column;
+    }
+    .modalHead {
+      padding:14px 18px; border-bottom:1px solid var(--border); display:flex;
+      justify-content:space-between; align-items:center; position:sticky; top:0;
+      background:#fff; z-index:2;
+    }
+    .modalHead h3 { margin:0; font-size:18px; }
+    .modalBody { padding:16px 18px; flex:1; }
+    .modalFoot { padding:13px 18px; border-top:1px solid var(--border); display:flex;
+      gap:8px; justify-content:flex-end; position:sticky; bottom:0; background:#fff; z-index:2; }
+
+    /* FORM */
+    .formGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .full { grid-column:1/-1; }
+    textarea { resize:vertical; min-height:80px; width:100%; padding:9px 11px;
+      border:1px solid var(--border); border-radius:10px; font-family:inherit; }
+
+    /* TOAST */
+    .toast {
+      position:fixed; right:20px; bottom:20px; z-index:80; background:#111827; color:#fff;
+      padding:12px 16px; border-radius:14px; display:none; max-width:420px;
+      box-shadow:var(--shadow); font-size:13px;
+    }
+    .toast.error { background:#991B1B; }
+
+    @media(max-width:1050px) {
+      .stageCards,.formGrid { grid-template-columns:1fr; }
+    }
+    @media(max-width:720px) {
+      .app { padding:12px 12px 40px; }
+      .topbar { padding:11px; gap:11px; flex-wrap:wrap; }
+      .logo { height:38px; font-size:17px; padding:0 11px; }
+      h1 { font-size:19px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <div class="bars"><span></span><span></span><span></span></div>
+        Lebane
+      </div>
+      <div>
+        <h1>Onboarding Lebane</h1>
+        <p class="subtitle">Panel optimizado · Datos por etapa</p>
+      </div>
+    </div>
+
+    <div class="topActions">
+      <button class="btn bell" onclick="openUnmatchedModal()" title="Respuestas sin match">
+        🔔 <span class="badge" id="bellBadge">0</span>
+      </button>
+      <button class="btn" onclick="exportCSV()">⬇ Exportar</button>
+      <button class="btn primary" onclick="openAddModal()">+ Agregar</button>
+
+      <div class="settingsWrap">
+        <button class="btn settingsBtn" onclick="toggleSettingsMenu(event)">⚙</button>
+        <div class="settingsMenu" id="settingsMenu">
+          <div style="padding:7px 9px 8px; font-size:10px; font-weight:900; color:var(--muted); text-transform:uppercase;">Herramientas</div>
+          <button class="settingsItem" onclick="syncNow()">
+            <span class="settingsIcon">↻</span>
+            <span>Sincronizar Form</span>
+          </button>
+          <button class="settingsItem" onclick="refreshData()">
+            <span class="settingsIcon">↺</span>
+            <span>Actualizar datos</span>
+          </button>
+          <button class="settingsItem" onclick="clearCache()">
+            <span class="settingsIcon">🗑</span>
+            <span>Limpiar caché</span>
+          </button>
+          <button class="settingsItem" onclick="testData()">
+            <span class="settingsIcon">🔍</span>
+            <span>Debug: Test Data</span>
+          </button>
+          <button class="settingsItem" onclick="testConnection()">
+            <span class="settingsIcon">🔌</span>
+            <span>Debug: Test Conexión API</span>
+          </button>
+          <div class="settingsDivider"></div>
+          <button class="settingsItem" onclick="openOmManager()">
+            <span class="settingsIcon">👥</span>
+            <span>Gestionar OMs</span>
+          </button>
+          <button class="settingsItem" onclick="openAmManager()">
+            <span class="settingsIcon">👤</span>
+            <span>Gestionar AMs</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tabBar">
+    <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab" onclick="switchTab('bienvenida')">📧 Bienvenida</button>
+    <button class="tab" onclick="switchTab('discovery')">🔍 Discovery</button>
+    <button class="tab" onclick="switchTab('calendario')">📅 Calendario</button>
+    <button class="tab" onclick="switchTab('payments')">💳 Payments</button>
+    <button class="tab" onclick="switchTab('historico')">✅ Histórico</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content" class="content"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modalBack" id="modalBack" onclick="onBackdropClick(event)">
+  <div class="modal" id="modalBox">
+    <div class="modalHead">
+      <h3 id="modalTitle">—</h3>
+      <button class="btn small" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modalBody" id="modalBody"></div>
+    <div class="modalFoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let currentTab = 'dashboard';
+let appData = {};
+const API_URL = '/api/onboarding';
+
+/* ======= INIT ======= */
+window.addEventListener('load', function() {
+  loadData();
+  document.querySelectorAll('.tab')[0].classList.add('active');
+});
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderContent();
+}
+
+function renderContent() {
+  const content = document.getElementById('content');
+
+  if (currentTab === 'dashboard') {
+    renderDashboard(content);
+  } else if (['bienvenida','discovery','calendario','payments','historico'].includes(currentTab)) {
+    renderStage(content, currentTab);
+  }
+}
+
+function renderDashboard(container) {
+  const h = appData.counts || {};
+  const grouped = appData.grouped || {};
+
+  function renderCompanies(stage) {
+    const companies = grouped[stage] || [];
+    if (!companies.length) return '';
+    return '<div class="companiesList">' + companies.map(c =>
+      `<a onclick="openProfile('${c.id}')">${c.empresa || '—'}</a>`
+    ).join('') + '</div>';
+  }
+
+  container.innerHTML = `
+    <div class="dashboard">
+      <div style="margin-bottom:20px;">
+        <h2 style="margin-bottom:10px;">Resumen de etapas</h2>
+        <p style="color:var(--muted); margin-bottom:20px;">Haz clic en un nombre para ver detalles</p>
+      </div>
+      <div class="stageCards">
+        <div class="stageCard welcome">
+          <h3>Bienvenida</h3>
+          <div class="num">${h.bienvenida || 0}</div>
+          <p>clientes pendientes</p>
+          ${renderCompanies('Bienvenida')}
+        </div>
+        <div class="stageCard discovery">
+          <h3>Discovery</h3>
+          <div class="num">${h.discovery || 0}</div>
+          <p>en introducción</p>
+          ${renderCompanies('Discovery')}
+        </div>
+        <div class="stageCard calendar">
+          <h3>Calendario</h3>
+          <div class="num">${h.calendario || 0}</div>
+          <p>agenda pendiente</p>
+          ${renderCompanies('Calendario')}
+        </div>
+        <div class="stageCard historic">
+          <h3>Histórico</h3>
+          <div class="num">${h.historico || 0}</div>
+          <p>completados</p>
+          ${renderCompanies('Histórico')}
+        </div>
+      </div>
+
+      <div style="margin-top:40px;">
+        <h3 style="margin-bottom:14px;">Acciones rápidas</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;">
+          <button class="btn primary" onclick="openAddModal()">➕ Nuevo cliente</button>
+          <button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>
+          <button class="btn" onclick="validateAmAssignment()" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">🔄 Validar AMs</button>
+          <button class="btn" onclick="syncPaymentsSheet()" style="background:#10b981;border-color:#10b981;color:#fff;">💳 Sincronizar Payments</button>
+          <button class="btn" onclick="openOmManager()">👥 Gestionar OMs</button>
+          <button class="btn" onclick="openAmManager()">👤 Gestionar AMs</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderStage(container, stage) {
+  const stageMap = { bienvenida: 'Bienvenida', discovery: 'Discovery', calendario: 'Calendario', payments: 'Payments', historico: 'Histórico' };
+  const stageName = stageMap[stage];
+
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando ' + stageName.toLowerCase() + '...</p></div>';
+
+  const action = (stage === 'payments') ? 'getPaymentsData' : 'getStageData';
+  const payload = (stage === 'payments') ? {} : { stage: stageName };
+
+  apiCall(action, payload, function(result) {
+    if (!result.ok) {
+      container.innerHTML = '<div class="empty">Error: ' + (result.message || 'Error al cargar') + '</div>';
+      return;
+    }
+    const clients = result.clients || [];
+    if (!clients.length) {
+      container.innerHTML = '<div class="empty">No hay clientes en ' + stageName + '</div>';
+      return;
+    }
+    if (stage === 'payments') {
+      // Vista especial para Payments: tabla con Empresa, OM, AM, Fecha de reunión
+      let tbody = '';
+      clients.forEach(c => {
+        tbody += `
+          <tr>
+            <td>${c.empresa || '—'}</td>
+            <td>${c.om || '—'}</td>
+            <td>${c.am || '—'}</td>
+            <td>${c.fecha || '—'}</td>
+            <td style="display:flex; gap:5px; font-size:12px;">
+              <button class="btn small" onclick="openFormResponses('${c.id}', '${c.empresa}', '${c.linkRespuestas || ''}')" title="Ver respuestas del formulario">👁️</button>
+              <button class="btn small" onclick="openGoogleDriveSearch('${c.empresa}')" title="Buscar documento en Google Drive">📄</button>
+              <button class="btn small" onclick="apiCall('completeClient',{id:'${c.id}'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      container.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+                <th style="padding:10px; text-align:left;">Empresa</th>
+                <th style="padding:10px; text-align:left;">OM</th>
+                <th style="padding:10px; text-align:left;">AM</th>
+                <th style="padding:10px; text-align:left;">Fecha Reunión</th>
+                <th style="padding:10px; text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tbody || '<tr><td colspan="5" style="padding:20px; text-align:center; color:#9ca3af;">Sin clientes con pagos pendientes</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      container.innerHTML = '<div class="clientList">' + clients.map(c => `
+        <div class="clientCard">
+          ${c.isNewStage ? '<div class="newBadge">🆕 New</div>' : ''}
+          <div class="cardHeader">
+            <div>
+              <div class="clientTitle">${c.empresa || '—'}</div>
+              <div class="meta">${c.mails || '—'} · ${c.om ? 'OM: ' + c.om : '—'} · ${c.am ? 'AM: ' + c.am : '—'}</div>
+            </div>
+            <button class="btn small" onclick="openProfile('${c.id}')">Ver</button>
+            ${c.losa === 'SI' ? '<button class="btn small" style="background:#8b5cf6;border-color:#8b5cf6;color:#fff;" onclick="openLegalizationModal(\''+c.id+'\')">⚖️ Legalización</button>' : ''}
+          </div>
+          <div class="mailStatus">
+            <div class="mailBadge ${c.mailBienvenida === '✅' ? 'sent' : 'pending'}">
+              📧 Bienvenida ${c.mailBienvenida === '✅' ? '✅' : '⏳'}
+            </div>
+            <div class="mailBadge ${c.mailDiscovery === '✅' ? 'sent' : 'pending'}">
+              🔍 Discovery ${c.mailDiscovery === '✅' ? '✅' : '⏳'}
+            </div>
+            <div class="mailBadge ${c.mailCalendario === '✅' ? 'sent' : 'pending'}">
+              📅 Calendario ${c.mailCalendario === '✅' ? '✅' : '⏳'}
+            </div>
+          </div>
+          <div class="cardActions">
+            <button class="btn small" onclick="openProfile('${c.id}')">📋 Perfil</button>
+            ${(c.payments === 'SI' || c.losa === 'SI') ? '<span style="display:inline-block; background:#7c3aed; color:white; padding:4px 12px; border-radius:4px; font-size:11px; font-weight:700; margin-left:8px;">🎯 Lebalización</span>' : ''}
+            <button class="btn small" onclick="apiCall('sendStageReminder',{id:'${c.id}',stage:'${c.etapa}'},loadData)" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">📢 FUP ${c.etapa === 'Bienvenida' ? '(' + (c.fupBienvenida || 0) + ')' : c.etapa === 'Discovery' ? '(' + (c.fupDiscovery || 0) + ')' : c.etapa === 'Calendario' ? '(' + (c.fupCalendario || 0) + ')' : '(0)'}</button>
+            ${stage === 'bienvenida' ? '<button class="btn small" onclick="apiCall(\'sendWelcomeEmail\',{id:\''+c.id+'\'},loadData)">✉ Enviar bienvenida</button>' : ''}
+            ${stage === 'discovery' ? '<button class="btn small" onclick="openDiscoveryModal(\''+c.id+'\')">📅 Agendar Discovery</button>' : ''}
+            ${stage === 'discovery' ? '<button class="btn small" onclick="apiCall(\'moveToCalendar\',{id:\''+c.id+'\'},loadData)" style="background:#10b981;border-color:#10b981;color:#fff;">✅ Pasar a Calendario</button>' : ''}
+            ${stage === 'calendario' ? '<button class="btn small" onclick="apiCall(\'sendCalendarEmail\',{id:\''+c.id+'\'},loadData)">📧 Enviar Calendario</button>' : ''}
+            ${stage === 'calendario' ? '<button class="btn small" onclick="openMeetingModal(\''+c.id+'\')">🎯 Registrar reunión</button>' : ''}
+          </div>
+        </div>
+      `).join('') + '</div>';
+    }
+  });
+}
+
+/* ======= DATA ======= */
+function loadData(force) {
+  apiCall('getPipelineData', {}, function(result) {
+    appData = result;
+    document.getElementById('bellBadge').textContent = result.counts?.unmatched || 0;
+    renderContent();
+  });
+}
+
+function refreshData() {
+  clearCache();
+}
+
+function clearCache() {
+  apiCall('clearCache', {}, function() {
+    showToast('Caché limpiado, recargando...');
+    setTimeout(() => location.reload(), 500);
+  });
+}
+
+function testData() {
+  document.getElementById('settingsMenu').classList.remove('open');
+  showToast('Probando datos...');
+  apiCall('testData', {}, function(result) {
+    console.log('Test Data Result:', result);
+
+    if (result.ok) {
+      let msg = '✅ Datos encontrados\n';
+      msg += 'Hoja: ' + result.sheetName + '\n';
+      msg += 'Filas: ' + result.totalRows + '\n';
+      msg += 'Columnas: ' + result.headerCount;
+      showToast(msg);
+    } else {
+      let msg = '❌ ' + result.message;
+      if (result.availableSheets) {
+        msg += '\n\nHojas disponibles:\n' + result.availableSheets.join(', ');
+      }
+      showToast(msg);
+    }
+    console.log('Full result:', JSON.stringify(result, null, 2));
+  });
+}
+
+function apiCall(action, payload, callback) {
+  const data = { action: action, payload: payload };
+
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.ok) showToast(result.message || 'Listo');
+    else showToast(result.message || 'Error', true);
+    if (callback) callback(result);
+  })
+  .catch(err => {
+    showToast('Error: ' + err, true);
+    console.error('Error:', err);
+  });
+}
+
+/* ======= MODALS ======= */
+function openProfile(id) {
+  apiCall('getClientProfile', { id: id }, function(result) {
+    if (!result.ok) { showToast('Error: ' + (result.message || 'No encontrado'), true); return; }
+    const c = result.client;
+    const modal = `
+      <div style="display:grid; gap:14px;">
+        <div>
+          <label>Empresa</label>
+          <input type="text" value="${c.empresa || ''}" onchange="updateClient(this,'Empresa','${c.id}')">
+        </div>
+        <div>
+          <label>Mails</label>
+          <input type="text" value="${c.mails || ''}" onchange="updateClient(this,'Mails','${c.id}')">
+        </div>
+        <div class="formGrid">
+          <div><label>OM</label><input type="text" value="${c.om || ''}" onchange="updateClient(this,'OM','${c.id}')"></div>
+          <div><label>AM</label><input type="text" value="${c.am || ''}" onchange="updateClient(this,'AM','${c.id}')"></div>
+        </div>
+        <div><label>Observaciones</label><textarea onchange="updateClient(this,'Observaciones','${c.id}')">${c.observaciones || ''}</textarea></div>
+      </div>
+    `;
+    showModal('Perfil: ' + c.empresa, modal, '<button class="btn" onclick="closeModal()">Cerrar</button>');
+  });
+}
+
+function openLegalizationModal(id) {
+  apiCall('getClientProfile', { id: id }, function(result) {
+    if (!result.ok) { showToast('Error: ' + (result.message || 'No encontrado'), true); return; }
+    const c = result.client;
+    const modal = `
+      <div style="display:grid; gap:14px;">
+        <div>
+          <label>Empresa</label>
+          <input type="text" value="${c.empresa || ''}" readonly style="background:#f0f0f0;">
+        </div>
+        <div class="full">
+          <label>Documentos Legalización</label>
+          <textarea id="legalizationDocs" placeholder="Detalles sobre documentos de legalización..." style="height: 150px;">${c.comentariosInternos || ''}</textarea>
+        </div>
+        <div class="full">
+          <label>Estado Legalización</label>
+          <select id="legalStatus">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En Revisión">En Revisión</option>
+            <option value="Completado">Completado</option>
+          </select>
+        </div>
+      </div>
+    `;
+    showModal('Legalización: ' + c.empresa, modal, `
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="saveLegalization('${c.id}')">Guardar</button>
+    `);
+  });
+}
+
+function saveLegalization(id) {
+  const docs = document.getElementById('legalizationDocs').value.trim();
+  const status = document.getElementById('legalStatus').value;
+  const data = {
+    id: id,
+    comentariosInternos: docs
+  };
+  apiCall('updateClient', data, function() {
+    closeModal();
+    loadData();
+    showToast('Legalización guardada');
+  });
+}
+
+function openFormResponses(id, empresa, linkRespuestas) {
+  if (!linkRespuestas) {
+    showToast('No hay respuestas del formulario para esta empresa', true);
+    return;
+  }
+
+  apiCall('getFormResponseDetails', { clientId: id }, function(result) {
+    if (!result.ok || !result.response || result.response.length === 0) {
+      showToast('No hay respuestas disponibles para esta empresa', true);
+      return;
+    }
+
+    const responses = result.response;
+    const modal = `
+      <div style="display:grid; gap:16px; max-height:400px; overflow-y:auto;">
+        <div style="border-bottom:2px solid #e5e7eb; padding-bottom:12px;">
+          <p style="margin:0; font-size:14px; color:#6b7280;">
+            <strong>Empresa:</strong> ${empresa}
+          </p>
+          <p style="margin:8px 0 0; font-size:12px; color:#9ca3af;">
+            <a href="${linkRespuestas}" target="_blank" style="color:#3b82f6;">Ver respuestas completas →</a>
+          </p>
+        </div>
+        ${responses.map(r => `
+          <div style="border-left:3px solid #3b82f6; padding-left:12px;">
+            <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#111827;">${r.label || r.pregunta || 'Pregunta'}</p>
+            <p style="margin:0; font-size:13px; color:#374151;">${r.value || r.respuesta || 'Sin respuesta'}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    showModal('Respuestas del formulario: ' + empresa, modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
+  });
+}
+
+function openGoogleDriveSearch(empresa) {
+  // Abre Google Drive en la carpeta especificada
+  const folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
+  const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+  window.open(folderUrl, '_blank');
+  showToast(`Buscá "${empresa}" en la carpeta de Google Drive`);
+}
+
+function openAddModal() {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Empresa</label><input id="empresa" type="text" placeholder="Nombre de la empresa"></div>
+      <div class="full"><label>Mails</label><input id="mails" type="email" placeholder="contacto@empresa.com"></div>
+      <div><label>Revenue</label><input id="revenue" type="text" placeholder="$USD"></div>
+      <div><label>OM</label><select id="om"><option>—</option><option>Agustin</option><option>Gabriela H</option><option>Julieta</option><option>Brisa</option></select></div>
+      <div><label>AM</label><select id="am"><option>—</option><option>a.nunez@lebane.app</option><option>g.murillo@lebane.app</option></select></div>
+      <div><label>Reimplementado</label><select id="reimplementado"><option value="NO">No</option><option value="SI">Sí</option></select></div>
+      <div><label>Payments</label><select id="payments"><option value="NO">No</option><option value="SI">Sí</option></select></div>
+      <div><label>LOSA</label><select id="losa"><option value="NO">No</option><option value="SI">Sí</option></select></div>
+      <div class="full"><label>Observaciones</label><textarea id="observaciones" placeholder="Notas internas..."></textarea></div>
+      <div class="full" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+        <input type="checkbox" id="sendWelcomeNow" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="sendWelcomeNow" style="margin: 0; cursor: pointer; font-weight: 500;">Enviar bienvenida ahora</label>
+      </div>
+    </div>
+  `;
+  showModal('Agregar cliente', modal, `
+    <button class="btn" id="btnCancelAdd">Cancelar</button>
+    <button class="btn primary" id="btnSaveAdd">Guardar</button>
+  `);
+
+  // Agregar event listeners con pequeño delay para asegurar que el HTML está listo
+  setTimeout(function() {
+    var btnCancel = document.getElementById('btnCancelAdd');
+    var btnSave = document.getElementById('btnSaveAdd');
+    if (btnCancel) btnCancel.addEventListener('click', closeModal);
+    if (btnSave) btnSave.addEventListener('click', doAddClient);
+  }, 50);
+}
+
+function doAddClient() {
+  const empresa = document.getElementById('empresa').value.trim();
+  const mails = document.getElementById('mails').value.trim();
+
+  if (!empresa) {
+    showToast('Completá el campo Empresa', true);
+    return;
+  }
+  if (!mails) {
+    showToast('Completá el campo Mails', true);
+    return;
+  }
+
+  const data = {
+    empresa: empresa,
+    mails: mails,
+    revenue: document.getElementById('revenue').value.trim(),
+    om: document.getElementById('om').value || '',
+    am: document.getElementById('am').value || '',
+    reimplementado: document.getElementById('reimplementado').value,
+    payments: document.getElementById('payments').value,
+    losa: document.getElementById('losa').value,
+    sendWelcomeNow: document.getElementById('sendWelcomeNow').checked,
+    observaciones: document.getElementById('observaciones').value.trim()
+  };
+
+  console.log('Enviando datos:', data);
+  apiCall('addClient', data, function() { closeModal(); loadData(); });
+}
+
+function updateClient(input, field, id) {
+  const data = { id: id };
+  data[field] = input.value;
+  apiCall('updateClient', data);
+}
+
+function openDiscoveryModal(id) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Fecha Discovery</label><input type="datetime-local" id="discFecha"></div>
+      <div class="full"><label>Link de reunión</label><input type="url" id="discLink" placeholder="https://..."></div>
+    </div>
+  `;
+  showModal('Agendar Discovery', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doSaveDiscovery('${id}')">Guardar y enviar</button>
+  `);
+}
+
+function doSaveDiscovery(id) {
+  apiCall('saveAndSendDiscovery', {
+    id: id,
+    fecha: document.getElementById('discFecha').value,
+    link: document.getElementById('discLink').value
+  }, function() { closeModal(); loadData(); });
+}
+
+function openMeetingModal(id) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Fecha y hora de reunión</label><input type="datetime-local" id="meetFecha"></div>
+      <div class="full"><label>Link de reunión</label><input type="url" id="meetLink" placeholder="https://..."></div>
+      <div class="full"><label>Observaciones</label><textarea id="meetObs"></textarea></div>
+    </div>
+  `;
+  showModal('Registrar reunión', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doSaveMeeting('${id}')">Registrar</button>
+  `);
+}
+
+function doSaveMeeting(id) {
+  apiCall('confirmMeeting', {
+    id: id,
+    fecha: document.getElementById('meetFecha').value,
+    link: document.getElementById('meetLink').value,
+    observaciones: document.getElementById('meetObs').value
+  }, function() { closeModal(); loadData(); });
+}
+
+function openOmManager() {
+  apiCall('getOmList', {}, function(result) {
+    if (!result.ok) {
+      showToast('Error al cargar OMs: ' + result.message, true);
+      return;
+    }
+
+    const oms = result.list || [];
+    let tbody = '';
+    oms.forEach(om => {
+      const statusBadge = om.active ? '✅ Activo' : '❌ Inactivo';
+      tbody += `
+        <tr>
+          <td>${om.name || '—'}</td>
+          <td>${om.calendar ? '<a href="' + om.calendar + '" target="_blank">Ver →</a>' : '—'}</td>
+          <td>${statusBadge}</td>
+          <td style="display:flex; gap:5px; font-size:12px;">
+            <button class="btn small" onclick="editOmModal('${om.name}')">✏️</button>
+            <button class="btn small" onclick="toggleOmStatus('${om.name}', ${!om.active})" style="background:${om.active ? '#fed7aa' : '#a7f3d0'};">⚡</button>
+            <button class="btn small" onclick="doDeleteOm('${om.name}')" style="background:#fee2e2;">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    const modal = `
+      <div style="margin-bottom:20px;">
+        <button class="btn primary" onclick="addOmModal()" style="margin-bottom:10px;">➕ Agregar OM</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+              <th style="padding:10px; text-align:left;">Nombre</th>
+              <th style="padding:10px; text-align:left;">Calendly</th>
+              <th style="padding:10px; text-align:left;">Estado</th>
+              <th style="padding:10px; text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tbody || '<tr><td colspan="4" style="padding:20px; text-align:center; color:#9ca3af;">Sin OMs</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    showModal('Gestionar OMs', modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
+  });
+}
+
+function addOmModal() {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Nombre</label><input id="omName" type="text" placeholder="e.g., Agustin"></div>
+      <div class="full"><label>Link Calendly</label><input id="omLink" type="url" placeholder="https://calendly.com/..."></div>
+    </div>
+  `;
+  showModal('Agregar OM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doAddOm()">Guardar</button>
+  `);
+}
+
+function doAddOm() {
+  const name = document.getElementById('omName').value.trim();
+  const link = document.getElementById('omLink').value.trim();
+
+  if (!name) {
+    showToast('Completá el nombre del OM', true);
+    return;
+  }
+
+  apiCall('addOm', { name: name, calendarLink: link }, function() {
+    closeModal();
+    openOmManager();
+  });
+}
+
+function editOmModal(omName) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Nombre</label><input id="omName" type="text" value="${omName}"></div>
+      <div class="full"><label>Link Calendly</label><input id="omLink" type="url" placeholder="https://calendly.com/..."></div>
+    </div>
+  `;
+  showModal('Editar OM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doEditOm('${omName}')">Guardar</button>
+  `);
+}
+
+function doEditOm(oldName) {
+  const newName = document.getElementById('omName').value.trim();
+  const link = document.getElementById('omLink').value.trim();
+
+  if (!newName) {
+    showToast('Completá el nombre del OM', true);
+    return;
+  }
+
+  apiCall('editOm', { oldName: oldName, newName: newName, calendarLink: link }, function() {
+    closeModal();
+    openOmManager();
+  });
+}
+
+function toggleOmStatus(omName, active) {
+  apiCall('toggleOmActive', { om: omName, active: active }, function(result) {
+    if (result.ok) {
+      setTimeout(() => openOmManager(), 300);
+    } else {
+      showToast('Error: ' + result.message, true);
+    }
+  });
+}
+
+function doDeleteOm(omName) {
+  if (confirm('¿Eliminar OM ' + omName + '?')) {
+    apiCall('deleteOm', { om: omName }, function() {
+      openOmManager();
+    });
+  }
+}
+
+function openAmManager() {
+  apiCall('getAmList', {}, function(result) {
+    if (!result.ok) {
+      showToast('Error al cargar AMs: ' + result.message, true);
+      return;
+    }
+
+    const ams = result.list || [];
+    let tbody = '';
+    ams.forEach(am => {
+      const statusBadge = am.active ? '✅ Activo' : '❌ Inactivo';
+      tbody += `
+        <tr>
+          <td>${am.email || '—'}</td>
+          <td>${statusBadge}</td>
+          <td style="display:flex; gap:5px; font-size:12px;">
+            <button class="btn small" onclick="editAmModal('${am.email}')">✏️</button>
+            <button class="btn small" onclick="toggleAmStatus('${am.email}', ${!am.active})" style="background:${am.active ? '#fed7aa' : '#a7f3d0'};">⚡</button>
+            <button class="btn small" onclick="doDeleteAm('${am.email}')" style="background:#fee2e2;">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    const modal = `
+      <div style="margin-bottom:20px;">
+        <button class="btn primary" onclick="addAmModal()" style="margin-bottom:10px;">➕ Agregar AM</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#f3f4f6; border-bottom:2px solid #e5e7eb;">
+              <th style="padding:10px; text-align:left;">Email</th>
+              <th style="padding:10px; text-align:left;">Estado</th>
+              <th style="padding:10px; text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tbody || '<tr><td colspan="3" style="padding:20px; text-align:center; color:#9ca3af;">Sin AMs</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    showModal('Gestionar AMs', modal, `
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    `);
+  });
+}
+
+function addAmModal() {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Email</label><input id="amEmail" type="email" placeholder="email@lebane.app"></div>
+    </div>
+  `;
+  showModal('Agregar AM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doAddAm()">Guardar</button>
+  `);
+}
+
+function doAddAm() {
+  const email = document.getElementById('amEmail').value.trim();
+
+  if (!email) {
+    showToast('Completá el email del AM', true);
+    return;
+  }
+
+  apiCall('addAm', { email: email }, function() {
+    closeModal();
+    openAmManager();
+  });
+}
+
+function editAmModal(amEmail) {
+  const modal = `
+    <div class="formGrid full">
+      <div class="full"><label>Email</label><input id="amEmail" type="email" value="${amEmail}"></div>
+    </div>
+  `;
+  showModal('Editar AM', modal, `
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doEditAm('${amEmail}')">Guardar</button>
+  `);
+}
+
+function doEditAm(oldEmail) {
+  const newEmail = document.getElementById('amEmail').value.trim();
+
+  if (!newEmail) {
+    showToast('Completá el email del AM', true);
+    return;
+  }
+
+  apiCall('editAm', { oldEmail: oldEmail, newEmail: newEmail }, function() {
+    closeModal();
+    openAmManager();
+  });
+}
+
+function toggleAmStatus(amEmail, active) {
+  apiCall('toggleAmActive', { am: amEmail, active: active }, function(result) {
+    if (result.ok) {
+      setTimeout(() => openAmManager(), 300);
+    } else {
+      showToast('Error: ' + result.message, true);
+    }
+  });
+}
+
+function doDeleteAm(amEmail) {
+  if (confirm('¿Eliminar AM ' + amEmail + '?')) {
+    apiCall('deleteAm', { am: amEmail }, function() {
+      openAmManager();
+    });
+  }
+}
+
+function openUnmatchedModal() {
+  alert('Mostrar respuestas sin match (implementar modal)');
+}
+
+function syncNow() {
+  showToast('Sincronizando...');
+  apiCall('syncFormResponses', {}, loadData);
+}
+
+function exportCSV() {
+  alert('Exportar CSV (implementar)');
+}
+
+function syncPaymentsSheet() {
+  if (!confirm('¿Sincronizar todos los clientes con Payments=SI a la hoja Payments?\n\nEsto incluye clientes en "Clientes y etapas" e "Histórico".')) {
+    return;
+  }
+
+  showToast('Sincronizando Payments...');
+  apiCall('syncAllPaymentsClients', {}, function(result) {
+    if (result.ok) {
+      showToast('✅ Sincronizados: ' + result.synced + ' | Ya existían: ' + result.skipped);
+      loadData();
+    } else {
+      showToast('Error en sincronización', true);
+    }
+  });
+}
+
+function validateAmAssignment() {
+  if (!confirm('¿Revalidar asignación de AMs en Calendario?\n\nSe asignarán/removerán AMs según: Revenue >= 8000 Y Payments = SI')) {
+    return;
+  }
+
+  showToast('Validando asignación de AMs...');
+  apiCall('validatePaymentsAmAssignment', {}, function(result) {
+    if (result.ok) {
+      showToast('✅ ' + result.message);
+      loadData();
+    } else {
+      showToast('❌ ' + result.message, true);
+    }
+  });
+}
+
+/* ======= UI ======= */
+function showModal(title, body, footer) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFoot').innerHTML = footer;
+  document.getElementById('modalBack').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modalBack').style.display = 'none';
+}
+
+function onBackdropClick(e) {
+  if (e.target.id === 'modalBack') closeModal();
+}
+
+function showToast(msg, isError) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.toggle('error', isError);
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+function toggleSettingsMenu(e) {
+  const menu = document.getElementById('settingsMenu');
+  menu.classList.toggle('open');
+  if (menu.classList.contains('open')) {
+    document.addEventListener('click', closeSettingsOnClickOutside);
+  }
+}
+
+function closeSettingsOnClickOutside(e) {
+  const menu = document.getElementById('settingsMenu');
+  const btn = document.querySelector('.settingsBtn');
+  if (!menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+    document.removeEventListener('click', closeSettingsOnClickOutside);
+  }
+}
+
+function testConnection() {
+  document.getElementById('settingsMenu').classList.remove('open');
+  showToast('Probando conexión...');
+  console.log('🔌 Intentando conectar a:', API_URL);
+
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getPipelineData', payload: {} })
+  })
+  .then(r => {
+    console.log('✅ Response status:', r.status);
+    return r.json();
+  })
+  .then(result => {
+    console.log('✅ Data received:', result);
+    if (result.ok || result.counts) {
+      showToast('✅ Conexión exitosa\n\nBienvenida: ' + (result.counts?.bienvenida || 0) + '\nDiscovery: ' + (result.counts?.discovery || 0));
+    } else {
+      showToast('⚠️ Conexión OK pero error: ' + (result.message || 'Desconocido'), true);
+    }
+  })
+  .catch(err => {
+    console.error('❌ Error:', err);
+    showToast('❌ Error de conexión:\n\n' + err.message, true);
+  });
+}
+</script>
+</body>
+</html>
