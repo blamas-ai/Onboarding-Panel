@@ -4469,34 +4469,23 @@ function rowToObject_(row, headers) {
  * Busca contratos por nombre de empresa
  ****************************************************/
 function findDocumentByCompanyName(empresaNombre) {
-  var folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
-  var folder = DriveApp.getFolderById(folderId);
+  try {
+    var folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
+    var folder = DriveApp.getFolderById(folderId);
 
-  if (!folder) {
-    return { ok: false, message: 'Carpeta no encontrada' };
-  }
+    if (!folder) {
+      return { ok: false, message: 'Carpeta no encontrada' };
+    }
 
-  var resultados = [];
+    var resultados = [];
+    var empresaNombreLower = empresaNombre.toLowerCase();
 
-  // Busca carpetas que contengan el nombre de la empresa (búsqueda exacta primero)
-  var subfolder = folder.getFoldersByName(empresaNombre);
-  if (subfolder.hasNext()) {
-    var carpeta = subfolder.next();
-    resultados.push({
-      nombre: carpeta.getName(),
-      url: carpeta.getUrl(),
-      id: carpeta.getId(),
-      tipo: 'carpeta'
-    });
-  }
-
-  // Busca carpetas con búsqueda parcial
-  var allFolders = folder.getFolders();
-  while (allFolders.hasNext()) {
-    var carpeta = allFolders.next();
-    if (carpeta.getName().toLowerCase().includes(empresaNombre.toLowerCase())) {
-      var exists = resultados.some(function(r) { return r.id === carpeta.getId(); });
-      if (!exists) {
+    // Busca carpetas que contengan el nombre de la empresa
+    var allFolders = folder.getFolders();
+    while (allFolders.hasNext()) {
+      var carpeta = allFolders.next();
+      var carpetaNombre = carpeta.getName().toLowerCase();
+      if (carpetaNombre.indexOf(empresaNombreLower) !== -1) {
         resultados.push({
           nombre: carpeta.getName(),
           url: carpeta.getUrl(),
@@ -4505,38 +4494,42 @@ function findDocumentByCompanyName(empresaNombre) {
         });
       }
     }
-  }
 
-  // Busca archivos que contengan el nombre
-  var allFiles = folder.getFiles();
-  while (allFiles.hasNext()) {
-    var file = allFiles.next();
-    if (file.getName().toLowerCase().includes(empresaNombre.toLowerCase())) {
-      resultados.push({
-        nombre: file.getName(),
-        url: file.getUrl(),
-        id: file.getId(),
-        tipo: 'archivo'
-      });
+    // Busca archivos que contengan el nombre
+    var allFiles = folder.getFiles();
+    while (allFiles.hasNext()) {
+      var file = allFiles.next();
+      var filNombre = file.getName().toLowerCase();
+      if (filNombre.indexOf(empresaNombreLower) !== -1) {
+        resultados.push({
+          nombre: file.getName(),
+          url: file.getUrl(),
+          id: file.getId(),
+          tipo: 'archivo'
+        });
+      }
     }
-  }
 
-  if (resultados.length > 0) {
+    if (resultados.length > 0) {
+      return {
+        ok: true,
+        found: true,
+        multiple: resultados.length > 1,
+        resultados: resultados,
+        url: resultados[0].url,
+        nombre: resultados[0].nombre
+      };
+    }
+
     return {
       ok: true,
-      found: true,
-      multiple: resultados.length > 1,
-      resultados: resultados,
-      url: resultados[0].url,
-      nombre: resultados[0].nombre
+      found: false,
+      message: 'No se encontraron documentos para: ' + empresaNombre
     };
+  } catch (err) {
+    Logger.log('Error en findDocumentByCompanyName: ' + err.toString());
+    return { ok: false, message: 'Error en búsqueda: ' + err.toString() };
   }
-
-  return {
-    ok: true,
-    found: false,
-    message: 'No se encontraron documentos para: ' + empresaNombre
-  };
 }
 
 function doOptions(e) {
