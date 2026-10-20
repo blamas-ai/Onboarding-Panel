@@ -4468,8 +4468,14 @@ function rowToObject_(row, headers) {
  * BÚSQUEDA DE DOCUMENTOS EN GOOGLE DRIVE
  * Busca contratos por nombre de empresa
  ****************************************************/
-function findDocumentByCompanyName(empresaNombre) {
+function findDocumentByCompanyName(payload) {
   try {
+    var empresaNombre = payload.empresa || payload;
+
+    if (!empresaNombre || empresaNombre.length === 0) {
+      return { ok: false, message: 'Nombre de empresa no especificado' };
+    }
+
     var folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
     var folder = DriveApp.getFolderById(folderId);
 
@@ -4478,7 +4484,7 @@ function findDocumentByCompanyName(empresaNombre) {
     }
 
     var resultados = [];
-    var empresaNombreLower = empresaNombre.toLowerCase();
+    var empresaNombreLower = String(empresaNombre).toLowerCase();
 
     // Busca carpetas que contengan el nombre de la empresa
     var allFolders = folder.getFolders();
