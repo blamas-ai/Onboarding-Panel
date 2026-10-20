@@ -4477,47 +4477,37 @@ function findDocumentByCompanyName(payload) {
       return { ok: false, message: 'Nombre de empresa no especificado' };
     }
 
-    var folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
-    var folder = DriveApp.getFolderById(folderId);
-
-    if (!folder) {
-      return { ok: false, message: 'Carpeta no encontrada' };
-    }
-
     var resultados = [];
-    var empresaNombreLower = String(empresaNombre).toLowerCase();
+    var query = 'name contains "' + empresaNombre.replace(/"/g, '\\"') + '" and trashed = false';
 
-    // Busca carpetas que contengan el nombre de la empresa
-    var allFolders = folder.getFolders();
-    while (allFolders.hasNext()) {
-      var carpeta = allFolders.next();
-      var carpetaNombre = carpeta.getName().toLowerCase();
-      if (carpetaNombre.indexOf(empresaNombreLower) !== -1) {
-        resultados.push({
-          nombre: carpeta.getName(),
-          url: carpeta.getUrl(),
-          id: carpeta.getId(),
-          tipo: 'carpeta'
-        });
-      }
-    }
+    try {
+      var files = DriveApp.searchFiles(query);
+      var count = 0;
+      var maxResults = 20;
 
-    // Busca archivos que contengan el nombre
-    var allFiles = folder.getFiles();
-    while (allFiles.hasNext()) {
-      var file = allFiles.next();
-      var filNombre = file.getName().toLowerCase();
-      if (filNombre.indexOf(empresaNombreLower) !== -1) {
+      while (files.hasNext() && count < maxResults) {
+        var file = files.next();
+        var fileName = file.getName();
+
         resultados.push({
-          nombre: file.getName(),
+          nombre: fileName,
           url: file.getUrl(),
           id: file.getId(),
-          tipo: 'archivo'
+          tipo: file.isFolder() ? 'carpeta' : 'archivo'
         });
+        count++;
       }
+    } catch (e) {
+      Logger.log('Error en búsqueda de Drive: ' + e.toString());
     }
 
     if (resultados.length > 0) {
+      // Ordenar: carpetas primero, luego archivos
+      resultados.sort(function(a, b) {
+        if (a.tipo === b.tipo) return 0;
+        return a.tipo === 'carpeta' ? -1 : 1;
+      });
+
       return {
         ok: true,
         found: true,
