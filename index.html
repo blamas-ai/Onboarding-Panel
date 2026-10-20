@@ -372,6 +372,7 @@ function renderDashboard(container) {
           <button class="btn primary" onclick="openAddModal()">➕ Nuevo cliente</button>
           <button class="btn" onclick="syncNow()">↻ Sincronizar Form</button>
           <button class="btn" onclick="validateAmAssignment()" style="background:#f59e0b;border-color:#f59e0b;color:#fff;">🔄 Validar AMs</button>
+          <button class="btn" onclick="syncPaymentsSheet()" style="background:#10b981;border-color:#10b981;color:#fff;">💳 Sincronizar Payments</button>
           <button class="btn" onclick="openOmManager()">👥 Gestionar OMs</button>
           <button class="btn" onclick="openAmManager()">👤 Gestionar AMs</button>
         </div>
@@ -411,6 +412,7 @@ function renderStage(container, stage) {
             <td>${c.fecha || '—'}</td>
             <td style="display:flex; gap:5px; font-size:12px;">
               <button class="btn small" onclick="openFormResponses('${c.id}', '${c.empresa}', '${c.linkRespuestas || ''}')" title="Ver respuestas del formulario">👁️</button>
+              <button class="btn small" onclick="openGoogleDriveSearch('${c.empresa}')" title="Buscar documento en Google Drive">📄</button>
               <button class="btn small" onclick="apiCall('completeClient',{id:'${c.id}'},loadData)" style="background:#059669;border-color:#059669;color:#fff;">✅</button>
             </td>
           </tr>
@@ -644,6 +646,14 @@ function openFormResponses(id, empresa, linkRespuestas) {
       <button class="btn" onclick="closeModal()">Cerrar</button>
     `);
   });
+}
+
+function openGoogleDriveSearch(empresa) {
+  // Abre Google Drive en la carpeta especificada
+  const folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
+  const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+  window.open(folderUrl, '_blank');
+  showToast(`Buscá "${empresa}" en la carpeta de Google Drive`);
 }
 
 function openAddModal() {
@@ -1015,6 +1025,22 @@ function syncNow() {
 
 function exportCSV() {
   alert('Exportar CSV (implementar)');
+}
+
+function syncPaymentsSheet() {
+  if (!confirm('¿Sincronizar todos los clientes con Payments=SI a la hoja Payments?\n\nEsto incluye clientes en "Clientes y etapas" e "Histórico".')) {
+    return;
+  }
+
+  showToast('Sincronizando Payments...');
+  apiCall('syncAllPaymentsClients', {}, function(result) {
+    if (result.ok) {
+      showToast('✅ Sincronizados: ' + result.synced + ' | Ya existían: ' + result.skipped);
+      loadData();
+    } else {
+      showToast('Error en sincronización', true);
+    }
+  });
 }
 
 function validateAmAssignment() {

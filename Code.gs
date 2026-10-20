@@ -124,6 +124,7 @@ function apiRouter(action, payload) {
       case 'moveToDiscovery':         result = moveToDiscovery(payload.id || payload.clientId || payload); break;
       case 'moveToCalendar':          result = moveToCalendar(payload.id || payload.clientId || payload); break;
       case 'validatePaymentsAmAssignment': result = validatePaymentsAmAssignment(); break;
+      case 'syncAllPaymentsClients':  result = syncAllPaymentsClients(); break;
       case 'getOmList':               result = getOmList(); break;
       case 'toggleOmActive':          result = toggleOmActive(payload.om, payload.active); break;
       case 'addOm':                   result = addOm(payload); break;
@@ -4396,6 +4397,70 @@ function createSimpleJsonResponse_(data) {
   var output = ContentService.createTextOutput(JSON.stringify(safe));
   output.setMimeType(ContentService.MimeType.JSON);
   return output;
+}
+
+/****************************************************
+ * SINCRONIZACIÓN MASIVA DE PAYMENTS
+ * Sincroniza todos los clientes con Payments=SI
+ ****************************************************/
+function syncAllPaymentsClients() {
+  var ss = getMainSpreadsheet_();
+  var clientsSheet = ss.getSheetByName(LEBANE.sheets.clients);
+  var historySheet = ss.getSheetByName(LEBANE.sheets.history);
+  var paymentsSheet = ss.getSheetByName(LEBANE.sheets.payments);
+
+  if (!clientsSheet || !historySheet || !paymentsSheet) {
+    throw new Error('No se encontraron las hojas requeridas');
+  }
+
+  var synced = 0;
+  var skipped = 0;
+
+  // Procesar "Clientes y etapas"
+  var clientsData = clientsSheet.getDataRange().getValues();
+  var clientsHeaders = clientsData[0];
+  var paymentsColIdx = clientsHeaders.indexOf('Payments');
+
+  for (var i = 1; i < clientsData.length; i++) {
+    if (clientsData[i][paymentsColIdx] === 'SI') {
+      var client = rowToObject_(clientsData[i], clientsHeaders);
+      if (client['ID'] && client['Empresa']) {
+        upsertPayments_(client);
+        synced++;
+      }
+    }
+  }
+
+  // Procesar "Histórico clientes"
+  var historyData = historySheet.getDataRange().getValues();
+  var historyHeaders = historyData[0];
+  var historyPaymentsColIdx = historyHeaders.indexOf('Payments');
+
+  for (var i = 1; i < historyData.length; i++) {
+    if (historyData[i][historyPaymentsColIdx] === 'SI') {
+      var client = rowToObject_(historyData[i], historyHeaders);
+      if (client['ID'] && client['Empresa']) {
+        var existing = findRowByValue_(paymentsSheet, 'ID', client['ID']);
+        if (!existing) {
+          upsertPayments_(client);
+          synced++;
+        } else {
+          skipped++;
+        }
+      }
+    }
+  }
+
+  Logger.log('Sincronización completada: ' + synced + ' clientes sincronizados, ' + skipped + ' ya existían');
+  return {ok: true, synced: synced, skipped: skipped};
+}
+
+function rowToObject_(row, headers) {
+  var obj = {};
+  for (var i = 0; i < headers.length; i++) {
+    obj[headers[i]] = row[i] || '';
+  }
+  return obj;
 }
 
 function doOptions(e) {
