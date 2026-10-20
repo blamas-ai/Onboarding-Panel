@@ -649,11 +649,23 @@ function openFormResponses(id, empresa, linkRespuestas) {
 }
 
 function openGoogleDriveSearch(empresa) {
-  // Abre Google Drive en la carpeta especificada
-  const folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
-  const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
-  window.open(folderUrl, '_blank');
-  showToast(`Buscá "${empresa}" en la carpeta de Google Drive`);
+  showToast('Buscando documento...');
+  apiCall('findDocumentByCompanyName', { empresa: empresa }, function(result) {
+    if (result.ok && result.found) {
+      window.open(result.url, '_blank');
+      showToast('✅ Abierto: ' + (result.resultados ? result.resultados[0].nombre : result.nombre));
+    } else if (result.ok && !result.found) {
+      showToast('No se encontró documento para: ' + empresa, true);
+      // Abre la carpeta como fallback
+      const folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
+      const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+      if (confirm('¿Abrir la carpeta de Google Drive?')) {
+        window.open(folderUrl, '_blank');
+      }
+    } else {
+      showToast('Error en búsqueda', true);
+    }
+  });
 }
 
 function openAddModal() {

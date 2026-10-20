@@ -125,6 +125,7 @@ function apiRouter(action, payload) {
       case 'moveToCalendar':          result = moveToCalendar(payload.id || payload.clientId || payload); break;
       case 'validatePaymentsAmAssignment': result = validatePaymentsAmAssignment(); break;
       case 'syncAllPaymentsClients':  result = syncAllPaymentsClients(); break;
+      case 'findDocumentByCompanyName': result = findDocumentByCompanyName(payload.empresa || payload); break;
       case 'getOmList':               result = getOmList(); break;
       case 'toggleOmActive':          result = toggleOmActive(payload.om, payload.active); break;
       case 'addOm':                   result = addOm(payload); break;
@@ -4461,6 +4462,64 @@ function rowToObject_(row, headers) {
     obj[headers[i]] = row[i] || '';
   }
   return obj;
+}
+
+/****************************************************
+ * BÚSQUEDA DE DOCUMENTOS EN GOOGLE DRIVE
+ * Busca contratos por nombre de empresa
+ ****************************************************/
+function findDocumentByCompanyName(empresaNombre) {
+  var folderId = '1RJg6JtrVGKgSgTCwm922QoMXAXGbDz0U';
+  var folder = DriveApp.getFolderById(folderId);
+
+  if (!folder) {
+    return { ok: false, message: 'Carpeta no encontrada' };
+  }
+
+  // Busca archivos que contengan el nombre de la empresa
+  var files = folder.getFilesByName(empresaNombre);
+
+  if (files.hasNext()) {
+    var file = files.next();
+    return {
+      ok: true,
+      found: true,
+      nombre: file.getName(),
+      url: file.getUrl(),
+      id: file.getId()
+    };
+  }
+
+  // Si no encuentra con nombre exacto, busca archivos que contengan el nombre
+  var allFiles = folder.getFiles();
+  var resultados = [];
+
+  while (allFiles.hasNext()) {
+    var file = allFiles.next();
+    if (file.getName().toLowerCase().includes(empresaNombre.toLowerCase())) {
+      resultados.push({
+        nombre: file.getName(),
+        url: file.getUrl(),
+        id: file.getId()
+      });
+    }
+  }
+
+  if (resultados.length > 0) {
+    return {
+      ok: true,
+      found: true,
+      multiple: resultados.length > 1,
+      resultados: resultados,
+      url: resultados[0].url
+    };
+  }
+
+  return {
+    ok: true,
+    found: false,
+    message: 'No se encontraron documentos para: ' + empresaNombre
+  };
 }
 
 function doOptions(e) {
