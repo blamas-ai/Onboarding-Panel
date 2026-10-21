@@ -1483,7 +1483,7 @@ function validatePaymentsAmAssignment() {
     var payments = String(values[i][paymentsIdx] || '').trim();
     var am = String(values[i][amIdx] || '').trim();
 
-    var shouldHaveAm = (revenue >= 8000) && (payments === 'SI');
+    var shouldHaveAm = (revenue >= 8000) || (payments === 'SI');
 
     if (shouldHaveAm && !am) {
       // Asignar AM
